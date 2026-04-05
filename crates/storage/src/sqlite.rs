@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use chrono::Utc;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use uuid::Uuid;
 
 use note_core::error::CoreError;
@@ -16,16 +16,14 @@ pub struct SqliteStore {
 
 impl SqliteStore {
     pub fn open(path: impl AsRef<Path>) -> Result<Self, CoreError> {
-        let conn =
-            Connection::open(path).map_err(|e| CoreError::Storage(e.to_string()))?;
+        let conn = Connection::open(path).map_err(|e| CoreError::Storage(e.to_string()))?;
         conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;")
             .map_err(|e| CoreError::Storage(e.to_string()))?;
         Ok(Self { conn })
     }
 
     pub fn in_memory() -> Result<Self, CoreError> {
-        let conn =
-            Connection::open_in_memory().map_err(|e| CoreError::Storage(e.to_string()))?;
+        let conn = Connection::open_in_memory().map_err(|e| CoreError::Storage(e.to_string()))?;
         conn.execute_batch("PRAGMA foreign_keys=ON;")
             .map_err(|e| CoreError::Storage(e.to_string()))?;
         Ok(Self { conn })
@@ -67,7 +65,8 @@ impl SqliteStore {
 
         // Aggregate aliases for this note
         let aliases: String = {
-            let mut stmt = self.conn
+            let mut stmt = self
+                .conn
                 .prepare("SELECT alias_text FROM aliases WHERE note_id = ?1")
                 .map_err(Self::map_err)?;
             let names: Vec<String> = stmt
@@ -358,8 +357,10 @@ impl NoteStore for SqliteStore {
                     title: row.get(2)?,
                     template_id: row.get::<_, Option<String>>(3)?.map(|s| s.parse().unwrap()),
                     lifecycle: lifecycle_str.parse().unwrap_or_default(),
-                    visibility: serde_json::from_value(serde_json::Value::String(visibility_str)).unwrap_or_default(),
-                    ai_policy: serde_json::from_value(serde_json::Value::String(ai_policy_str)).unwrap_or_default(),
+                    visibility: serde_json::from_value(serde_json::Value::String(visibility_str))
+                        .unwrap_or_default(),
+                    ai_policy: serde_json::from_value(serde_json::Value::String(ai_policy_str))
+                        .unwrap_or_default(),
                     blocks: Vec::new(),
                     pinned: row.get::<_, i32>(7)? != 0,
                     created_at: row.get::<_, String>(8)?.parse().unwrap(),
@@ -382,24 +383,31 @@ impl NoteStore for SqliteStore {
             )
             .map_err(Self::map_err)?;
         let rows = stmt
-            .query_map(params![workspace_id.to_string(), lifecycle.to_string()], |row| {
-                let lifecycle_str: String = row.get(4)?;
-                let visibility_str: String = row.get(5)?;
-                let ai_policy_str: String = row.get(6)?;
-                Ok(Note {
-                    id: row.get::<_, String>(0)?.parse().unwrap(),
-                    notebook_id: row.get::<_, String>(1)?.parse().unwrap(),
-                    title: row.get(2)?,
-                    template_id: row.get::<_, Option<String>>(3)?.map(|s| s.parse().unwrap()),
-                    lifecycle: lifecycle_str.parse().unwrap_or_default(),
-                    visibility: serde_json::from_value(serde_json::Value::String(visibility_str)).unwrap_or_default(),
-                    ai_policy: serde_json::from_value(serde_json::Value::String(ai_policy_str)).unwrap_or_default(),
-                    blocks: Vec::new(),
-                    pinned: row.get::<_, i32>(7)? != 0,
-                    created_at: row.get::<_, String>(8)?.parse().unwrap(),
-                    updated_at: row.get::<_, String>(9)?.parse().unwrap(),
-                })
-            })
+            .query_map(
+                params![workspace_id.to_string(), lifecycle.to_string()],
+                |row| {
+                    let lifecycle_str: String = row.get(4)?;
+                    let visibility_str: String = row.get(5)?;
+                    let ai_policy_str: String = row.get(6)?;
+                    Ok(Note {
+                        id: row.get::<_, String>(0)?.parse().unwrap(),
+                        notebook_id: row.get::<_, String>(1)?.parse().unwrap(),
+                        title: row.get(2)?,
+                        template_id: row.get::<_, Option<String>>(3)?.map(|s| s.parse().unwrap()),
+                        lifecycle: lifecycle_str.parse().unwrap_or_default(),
+                        visibility: serde_json::from_value(serde_json::Value::String(
+                            visibility_str,
+                        ))
+                        .unwrap_or_default(),
+                        ai_policy: serde_json::from_value(serde_json::Value::String(ai_policy_str))
+                            .unwrap_or_default(),
+                        blocks: Vec::new(),
+                        pinned: row.get::<_, i32>(7)? != 0,
+                        created_at: row.get::<_, String>(8)?.parse().unwrap(),
+                        updated_at: row.get::<_, String>(9)?.parse().unwrap(),
+                    })
+                },
+            )
             .map_err(Self::map_err)?;
         rows.collect::<Result<Vec<_>, _>>().map_err(Self::map_err)
     }
@@ -422,8 +430,10 @@ impl NoteStore for SqliteStore {
                     title: row.get(2)?,
                     template_id: row.get::<_, Option<String>>(3)?.map(|s| s.parse().unwrap()),
                     lifecycle: lifecycle_str.parse().unwrap_or_default(),
-                    visibility: serde_json::from_value(serde_json::Value::String(visibility_str)).unwrap_or_default(),
-                    ai_policy: serde_json::from_value(serde_json::Value::String(ai_policy_str)).unwrap_or_default(),
+                    visibility: serde_json::from_value(serde_json::Value::String(visibility_str))
+                        .unwrap_or_default(),
+                    ai_policy: serde_json::from_value(serde_json::Value::String(ai_policy_str))
+                        .unwrap_or_default(),
                     blocks: Vec::new(),
                     pinned: row.get::<_, i32>(7)? != 0,
                     created_at: row.get::<_, String>(8)?.parse().unwrap(),
@@ -481,8 +491,7 @@ impl NoteStore for SqliteStore {
                         .unwrap_or(BlockType::Text),
                     content: row.get(3)?,
                     sort_order: row.get(4)?,
-                    metadata: metadata_str
-                        .and_then(|s| serde_json::from_str(&s).ok()),
+                    metadata: metadata_str.and_then(|s| serde_json::from_str(&s).ok()),
                     created_at: row.get::<_, String>(6)?.parse().unwrap(),
                     updated_at: row.get::<_, String>(7)?.parse().unwrap(),
                 })
@@ -599,7 +608,11 @@ impl NoteStore for SqliteStore {
         self.conn
             .execute(
                 "UPDATE notes SET notebook_id = ?1, updated_at = ?2 WHERE id = ?3",
-                params![notebook_id.to_string(), now.to_rfc3339(), note_id.to_string()],
+                params![
+                    notebook_id.to_string(),
+                    now.to_rfc3339(),
+                    note_id.to_string()
+                ],
             )
             .map_err(Self::map_err)?;
         Ok(())
@@ -719,7 +732,10 @@ impl NoteStore for SqliteStore {
 
     fn delete_attachment(&self, id: Uuid) -> Result<(), CoreError> {
         self.conn
-            .execute("DELETE FROM attachments WHERE id = ?1", params![id.to_string()])
+            .execute(
+                "DELETE FROM attachments WHERE id = ?1",
+                params![id.to_string()],
+            )
             .map_err(Self::map_err)?;
         Ok(())
     }
@@ -828,7 +844,8 @@ impl NoteStore for SqliteStore {
 
     fn delete_alias(&self, id: Uuid) -> Result<(), CoreError> {
         // Look up note_id before deleting so we can reindex FTS
-        let note_id: Option<Uuid> = self.conn
+        let note_id: Option<Uuid> = self
+            .conn
             .query_row(
                 "SELECT note_id FROM aliases WHERE id = ?1",
                 params![id.to_string()],
@@ -936,8 +953,8 @@ impl NoteStore for SqliteStore {
     // === Saved Searches ===
 
     fn create_saved_search(&self, ss: &SavedSearch) -> Result<(), CoreError> {
-        let filter_json =
-            serde_json::to_string(&ss.filter).map_err(|e| CoreError::Serialization(e.to_string()))?;
+        let filter_json = serde_json::to_string(&ss.filter)
+            .map_err(|e| CoreError::Serialization(e.to_string()))?;
         self.conn
             .execute(
                 "INSERT INTO saved_searches (id, workspace_id, name, filter_json, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -985,10 +1002,7 @@ impl NoteStore for SqliteStore {
 
     // === Graph Data ===
 
-    fn get_graph_data(
-        &self,
-        workspace_id: Uuid,
-    ) -> Result<Vec<(Note, Vec<Link>)>, CoreError> {
+    fn get_graph_data(&self, workspace_id: Uuid) -> Result<Vec<(Note, Vec<Link>)>, CoreError> {
         // Get all active notes in workspace
         let mut stmt = self
             .conn
@@ -1033,11 +1047,7 @@ impl NoteStore for SqliteStore {
 
     // === Related Notes ===
 
-    fn find_related_notes(
-        &self,
-        note_id: Uuid,
-        limit: usize,
-    ) -> Result<Vec<Note>, CoreError> {
+    fn find_related_notes(&self, note_id: Uuid, limit: usize) -> Result<Vec<Note>, CoreError> {
         // Find notes that share tags or have direct links with the given note
         let sql = format!(
             "SELECT DISTINCT n.id, n.notebook_id, n.title, n.template_id, n.lifecycle, n.visibility, n.ai_policy, n.pinned, n.created_at, n.updated_at \

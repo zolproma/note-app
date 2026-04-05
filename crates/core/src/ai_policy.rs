@@ -68,9 +68,7 @@ pub fn check_note_access(
 
     match note_ai_policy {
         AiPolicy::NoAi => {
-            return Err(CoreError::AiPolicyViolation(
-                "note has no_ai policy".into(),
-            ));
+            return Err(CoreError::AiPolicyViolation("note has no_ai policy".into()));
         }
         AiPolicy::NoRemote => {
             if mode == AiMode::PrivateApi {

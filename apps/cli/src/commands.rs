@@ -3,13 +3,15 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use uuid::Uuid;
 
+use note_ai_gateway::provider::OpenAiCompatProvider;
+use note_ai_gateway::service::AiGateway;
 use note_core::ai_policy::AiMode;
 use note_core::model::{LinkType, NoteLifecycle, TemplateKind};
 use note_core::service::{NoteService, NoteStore};
-use note_ai_gateway::provider::OpenAiCompatProvider;
-use note_ai_gateway::service::AiGateway;
 
-use crate::{AiAction, AliasAction, InboxAction, LinkAction, NotebookAction, OutputFormat, TagAction};
+use crate::{
+    AiAction, AliasAction, InboxAction, LinkAction, NotebookAction, OutputFormat, TagAction,
+};
 
 fn get_default_workspace<S: NoteStore>(svc: &NoteService<S>) -> Result<Uuid> {
     let workspaces = svc.list_workspaces()?;
@@ -48,14 +50,13 @@ fn find_note_by_prefix<S: NoteStore>(svc: &NoteService<S>, prefix: &str) -> Resu
             }
         }
     }
-    Err(anyhow::anyhow!("Note with ID prefix '{}' not found", prefix))
+    Err(anyhow::anyhow!(
+        "Note with ID prefix '{}' not found",
+        prefix
+    ))
 }
 
-fn resolve_notebook<S: NoteStore>(
-    svc: &NoteService<S>,
-    ws_id: Uuid,
-    name: &str,
-) -> Result<Uuid> {
+fn resolve_notebook<S: NoteStore>(svc: &NoteService<S>, ws_id: Uuid, name: &str) -> Result<Uuid> {
     let notebooks = svc.list_notebooks(ws_id)?;
     notebooks
         .iter()
@@ -153,13 +154,19 @@ pub fn list_notes<S: NoteStore>(
                 println!("No notes found.");
                 return Ok(());
             }
-            println!("{:<8}  {:<30}  {:<10}  {:<20}", "ID", "Title", "Status", "Updated");
+            println!(
+                "{:<8}  {:<30}  {:<10}  {:<20}",
+                "ID", "Title", "Status", "Updated"
+            );
             println!("{}", "-".repeat(72));
             for note in &notes {
                 let short_id = &note.id.to_string()[..8];
                 let title: String = note.title.chars().take(30).collect();
                 let updated = note.updated_at.format("%Y-%m-%d %H:%M");
-                println!("{:<8}  {:<30}  {:<10}  {:<20}", short_id, title, note.lifecycle, updated);
+                println!(
+                    "{:<8}  {:<30}  {:<10}  {:<20}",
+                    short_id, title, note.lifecycle, updated
+                );
             }
             println!("\n{} note(s)", notes.len());
         }
@@ -184,13 +191,19 @@ pub fn search<S: NoteStore>(
                 println!("No results for '{query}'.");
                 return Ok(());
             }
-            println!("{:<8}  {:<30}  {:<10}  {:<20}", "ID", "Title", "Status", "Updated");
+            println!(
+                "{:<8}  {:<30}  {:<10}  {:<20}",
+                "ID", "Title", "Status", "Updated"
+            );
             println!("{}", "-".repeat(72));
             for note in &notes {
                 let short_id = &note.id.to_string()[..8];
                 let title: String = note.title.chars().take(30).collect();
                 let updated = note.updated_at.format("%Y-%m-%d %H:%M");
-                println!("{:<8}  {:<30}  {:<10}  {:<20}", short_id, title, note.lifecycle, updated);
+                println!(
+                    "{:<8}  {:<30}  {:<10}  {:<20}",
+                    short_id, title, note.lifecycle, updated
+                );
             }
             println!("\n{} result(s)", notes.len());
         }
@@ -251,7 +264,12 @@ pub fn inbox_cmd<S: NoteStore>(
                 OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&notes)?),
             }
         }
-        Some(InboxAction::Triage { id, title, notebook, workspace: ws }) => {
+        Some(InboxAction::Triage {
+            id,
+            title,
+            notebook,
+            workspace: ws,
+        }) => {
             let ws_id = resolve_workspace(svc, ws.as_deref().or(workspace))?;
             let note_id = find_note_by_prefix(svc, &id)?;
             let nb_id = notebook
@@ -421,8 +439,14 @@ pub fn show<S: NoteStore>(svc: &NoteService<S>, id: &str, fmt: OutputFormat) -> 
             println!("Status:     {}", note.lifecycle);
             println!("Visibility: {:?}", note.visibility);
             println!("AI Policy:  {:?}", note.ai_policy);
-            println!("Created:    {}", note.created_at.format("%Y-%m-%d %H:%M:%S"));
-            println!("Updated:    {}", note.updated_at.format("%Y-%m-%d %H:%M:%S"));
+            println!(
+                "Created:    {}",
+                note.created_at.format("%Y-%m-%d %H:%M:%S")
+            );
+            println!(
+                "Updated:    {}",
+                note.updated_at.format("%Y-%m-%d %H:%M:%S")
+            );
             if !tags.is_empty() {
                 let tag_names: Vec<_> = tags.iter().map(|t| t.name.as_str()).collect();
                 println!("Tags:       {}", tag_names.join(", "));
@@ -434,7 +458,10 @@ pub fn show<S: NoteStore>(svc: &NoteService<S>, id: &str, fmt: OutputFormat) -> 
             if !attachments.is_empty() {
                 println!("Attachments:");
                 for att in &attachments {
-                    println!("  {} ({:?}, {} bytes)", att.filename, att.media_type, att.size_bytes);
+                    println!(
+                        "  {} ({:?}, {} bytes)",
+                        att.filename, att.media_type, att.size_bytes
+                    );
                 }
             }
             if !links.is_empty() {
@@ -465,9 +492,17 @@ pub fn show<S: NoteStore>(svc: &NoteService<S>, id: &str, fmt: OutputFormat) -> 
 
 // === Link ===
 
-pub fn link<S: NoteStore>(svc: &NoteService<S>, action: LinkAction, fmt: OutputFormat) -> Result<()> {
+pub fn link<S: NoteStore>(
+    svc: &NoteService<S>,
+    action: LinkAction,
+    fmt: OutputFormat,
+) -> Result<()> {
     match action {
-        LinkAction::Create { from, to, workspace } => {
+        LinkAction::Create {
+            from,
+            to,
+            workspace,
+        } => {
             let source_id = find_note_by_prefix(svc, &from)?;
             // Try to resolve 'to' as note ID prefix first, then as title/alias
             let target_id = if let Ok(id) = find_note_by_prefix(svc, &to) {
@@ -496,7 +531,11 @@ pub fn link<S: NoteStore>(svc: &NoteService<S>, action: LinkAction, fmt: OutputF
             }
             for link in &links {
                 if let Ok(target) = svc.get_note(link.target_note_id) {
-                    println!("  -> {} ({})", target.title, &link.target_note_id.to_string()[..8]);
+                    println!(
+                        "  -> {} ({})",
+                        target.title,
+                        &link.target_note_id.to_string()[..8]
+                    );
                 }
             }
         }
@@ -509,7 +548,11 @@ pub fn link<S: NoteStore>(svc: &NoteService<S>, action: LinkAction, fmt: OutputF
             }
             for link in &backlinks {
                 if let Ok(source) = svc.get_note(link.source_note_id) {
-                    println!("  <- {} ({})", source.title, &link.source_note_id.to_string()[..8]);
+                    println!(
+                        "  <- {} ({})",
+                        source.title,
+                        &link.source_note_id.to_string()[..8]
+                    );
                 }
             }
         }
@@ -519,7 +562,11 @@ pub fn link<S: NoteStore>(svc: &NoteService<S>, action: LinkAction, fmt: OutputF
 
 // === Alias ===
 
-pub fn alias<S: NoteStore>(svc: &NoteService<S>, action: AliasAction, fmt: OutputFormat) -> Result<()> {
+pub fn alias<S: NoteStore>(
+    svc: &NoteService<S>,
+    action: AliasAction,
+    fmt: OutputFormat,
+) -> Result<()> {
     match action {
         AliasAction::Add { id, alias } => {
             let note_id = find_note_by_prefix(svc, &id)?;
@@ -546,7 +593,11 @@ pub fn alias<S: NoteStore>(svc: &NoteService<S>, action: AliasAction, fmt: Outpu
 
 // === Notebook ===
 
-pub fn notebook<S: NoteStore>(svc: &NoteService<S>, action: NotebookAction, fmt: OutputFormat) -> Result<()> {
+pub fn notebook<S: NoteStore>(
+    svc: &NoteService<S>,
+    action: NotebookAction,
+    fmt: OutputFormat,
+) -> Result<()> {
     match action {
         NotebookAction::Create { name, workspace } => {
             let ws_id = resolve_workspace(svc, workspace.as_deref())?;
@@ -575,14 +626,23 @@ pub fn notebook<S: NoteStore>(svc: &NoteService<S>, action: NotebookAction, fmt:
 
 // === AI ===
 
-fn build_provider(provider: &str, model: &str, api_key: Option<&str>) -> Result<OpenAiCompatProvider> {
+fn build_provider(
+    provider: &str,
+    model: &str,
+    api_key: Option<&str>,
+) -> Result<OpenAiCompatProvider> {
     match provider {
         "ollama" => Ok(OpenAiCompatProvider::ollama(model)),
         "openai" => {
-            let key = api_key.ok_or_else(|| anyhow::anyhow!("--api-key or OPENAI_API_KEY required for openai provider"))?;
+            let key = api_key.ok_or_else(|| {
+                anyhow::anyhow!("--api-key or OPENAI_API_KEY required for openai provider")
+            })?;
             Ok(OpenAiCompatProvider::openai(key, model))
         }
-        other => Err(anyhow::anyhow!("Unknown provider '{}'. Use 'ollama' or 'openai'.", other)),
+        other => Err(anyhow::anyhow!(
+            "Unknown provider '{}'. Use 'ollama' or 'openai'.",
+            other
+        )),
     }
 }
 
@@ -591,7 +651,10 @@ fn parse_ai_mode(mode: &str) -> Result<AiMode> {
         "local_only" => Ok(AiMode::LocalOnly),
         "private_api" => Ok(AiMode::PrivateApi),
         "blocked" => Ok(AiMode::BlockedRemote),
-        other => Err(anyhow::anyhow!("Unknown AI mode '{}'. Use 'local_only', 'private_api', or 'blocked'.", other)),
+        other => Err(anyhow::anyhow!(
+            "Unknown AI mode '{}'. Use 'local_only', 'private_api', or 'blocked'.",
+            other
+        )),
     }
 }
 
@@ -611,19 +674,28 @@ pub async fn ai_cmd<S: NoteStore>(
     match action {
         AiAction::SuggestTags { id } => {
             let note_id = find_note_by_prefix(svc, &id)?;
-            let suggestion = gateway.suggest_tags(svc, note_id).await.map_err(|e| anyhow::anyhow!("{e}"))?;
+            let suggestion = gateway
+                .suggest_tags(svc, note_id)
+                .await
+                .map_err(|e| anyhow::anyhow!("{e}"))?;
             match fmt {
                 OutputFormat::Table => {
                     println!("Suggested tags for note {}:", &note_id.to_string()[..8]);
                     println!("{}", suggestion.content);
-                    println!("\n(model: {}, status: pending — use 'notes tag add' to apply)", suggestion.model);
+                    println!(
+                        "\n(model: {}, status: pending — use 'notes tag add' to apply)",
+                        suggestion.model
+                    );
                 }
                 OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&suggestion)?),
             }
         }
         AiAction::Summarize { id } => {
             let note_id = find_note_by_prefix(svc, &id)?;
-            let suggestion = gateway.summarize(svc, note_id).await.map_err(|e| anyhow::anyhow!("{e}"))?;
+            let suggestion = gateway
+                .summarize(svc, note_id)
+                .await
+                .map_err(|e| anyhow::anyhow!("{e}"))?;
             match fmt {
                 OutputFormat::Table => {
                     println!("Summary for note {}:", &note_id.to_string()[..8]);
@@ -636,12 +708,18 @@ pub async fn ai_cmd<S: NoteStore>(
         AiAction::Classify { id, workspace } => {
             let ws_id = resolve_workspace(svc, workspace.as_deref())?;
             let note_id = find_note_by_prefix(svc, &id)?;
-            let suggestion = gateway.classify(svc, note_id, ws_id).await.map_err(|e| anyhow::anyhow!("{e}"))?;
+            let suggestion = gateway
+                .classify(svc, note_id, ws_id)
+                .await
+                .map_err(|e| anyhow::anyhow!("{e}"))?;
             match fmt {
                 OutputFormat::Table => {
                     println!("Classification for note {}:", &note_id.to_string()[..8]);
                     println!("{}", suggestion.content);
-                    println!("\n(model: {}, status: pending — use 'notes move' to apply)", suggestion.model);
+                    println!(
+                        "\n(model: {}, status: pending — use 'notes move' to apply)",
+                        suggestion.model
+                    );
                 }
                 OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&suggestion)?),
             }
@@ -649,12 +727,18 @@ pub async fn ai_cmd<S: NoteStore>(
         AiAction::SuggestLinks { id, workspace } => {
             let ws_id = resolve_workspace(svc, workspace.as_deref())?;
             let note_id = find_note_by_prefix(svc, &id)?;
-            let suggestion = gateway.suggest_links(svc, note_id, ws_id).await.map_err(|e| anyhow::anyhow!("{e}"))?;
+            let suggestion = gateway
+                .suggest_links(svc, note_id, ws_id)
+                .await
+                .map_err(|e| anyhow::anyhow!("{e}"))?;
             match fmt {
                 OutputFormat::Table => {
                     println!("Suggested links for note {}:", &note_id.to_string()[..8]);
                     println!("{}", suggestion.content);
-                    println!("\n(model: {}, status: pending — use 'notes link create' to apply)", suggestion.model);
+                    println!(
+                        "\n(model: {}, status: pending — use 'notes link create' to apply)",
+                        suggestion.model
+                    );
                 }
                 OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&suggestion)?),
             }
@@ -688,14 +772,24 @@ pub fn export<S: NoteStore>(svc: &NoteService<S>, id: &str) -> Result<()> {
             }
             note_core::model::BlockType::Quote => println!("> {}", block.content),
             note_core::model::BlockType::CornellCue => println!("**Cue:** {}", block.content),
-            note_core::model::BlockType::CornellSummary => println!("**Summary:** {}", block.content),
+            note_core::model::BlockType::CornellSummary => {
+                println!("**Summary:** {}", block.content)
+            }
             note_core::model::BlockType::ZettelAtom => println!("**Idea:** {}", block.content),
             note_core::model::BlockType::ZettelSource => println!("**Source:** {}", block.content),
-            note_core::model::BlockType::FeedbackExpected => println!("**Expected:** {}", block.content),
-            note_core::model::BlockType::FeedbackActual => println!("**Actual:** {}", block.content),
-            note_core::model::BlockType::FeedbackDeviation => println!("**Deviation:** {}", block.content),
+            note_core::model::BlockType::FeedbackExpected => {
+                println!("**Expected:** {}", block.content)
+            }
+            note_core::model::BlockType::FeedbackActual => {
+                println!("**Actual:** {}", block.content)
+            }
+            note_core::model::BlockType::FeedbackDeviation => {
+                println!("**Deviation:** {}", block.content)
+            }
             note_core::model::BlockType::FeedbackCause => println!("**Cause:** {}", block.content),
-            note_core::model::BlockType::FeedbackAction => println!("**Action:** {}", block.content),
+            note_core::model::BlockType::FeedbackAction => {
+                println!("**Action:** {}", block.content)
+            }
             note_core::model::BlockType::Divider => println!("---"),
             _ => {
                 if !block.content.is_empty() {

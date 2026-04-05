@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use note_core::ai_policy::{check_note_access, AiMode, AiScope};
+use note_core::ai_policy::{AiMode, AiScope, check_note_access};
 use note_core::error::CoreError;
 use note_core::model::Note;
 use note_core::service::{NoteService, NoteStore};
@@ -77,19 +77,27 @@ impl<P: AiProvider> AiGateway<P> {
 
         let content = format!("Title: {}\n\n{}", note.title, note.plain_text());
         let existing_tags = svc.get_note_tags(note_id)?;
-        let existing = existing_tags.iter().map(|t| t.name.as_str()).collect::<Vec<_>>().join(", ");
+        let existing = existing_tags
+            .iter()
+            .map(|t| t.name.as_str())
+            .collect::<Vec<_>>()
+            .join(", ");
 
         let messages = vec![
             ChatMessage::system(
                 "You are a note classification assistant. Suggest 3-5 relevant tags for the given note. \
                  Return ONLY a JSON array of tag strings, e.g. [\"rust\", \"programming\", \"concurrency\"]. \
-                 No explanation, just the JSON array."
+                 No explanation, just the JSON array.",
             ),
             ChatMessage::user(format!("Existing tags: {existing}\n\nNote:\n{content}")),
         ];
 
         Ok(PreparedRequest {
-            request: CompletionRequest { messages, max_tokens: Some(200), temperature: Some(0.3) },
+            request: CompletionRequest {
+                messages,
+                max_tokens: Some(200),
+                temperature: Some(0.3),
+            },
             job_type: "suggest_tags".into(),
             note_id,
         })
@@ -109,13 +117,17 @@ impl<P: AiProvider> AiGateway<P> {
         let messages = vec![
             ChatMessage::system(
                 "You are a note summarization assistant. Generate a concise summary (2-4 sentences) \
-                 of the given note. Return ONLY the summary text, no formatting or labels."
+                 of the given note. Return ONLY the summary text, no formatting or labels.",
             ),
             ChatMessage::user(content),
         ];
 
         Ok(PreparedRequest {
-            request: CompletionRequest { messages, max_tokens: Some(300), temperature: Some(0.3) },
+            request: CompletionRequest {
+                messages,
+                max_tokens: Some(300),
+                temperature: Some(0.3),
+            },
             job_type: "summarize".into(),
             note_id,
         })
@@ -151,7 +163,11 @@ impl<P: AiProvider> AiGateway<P> {
         ];
 
         Ok(PreparedRequest {
-            request: CompletionRequest { messages, max_tokens: Some(200), temperature: Some(0.3) },
+            request: CompletionRequest {
+                messages,
+                max_tokens: Some(200),
+                temperature: Some(0.3),
+            },
             job_type: "classify".into(),
             note_id,
         })
@@ -193,7 +209,11 @@ impl<P: AiProvider> AiGateway<P> {
         ];
 
         Ok(PreparedRequest {
-            request: CompletionRequest { messages, max_tokens: Some(500), temperature: Some(0.3) },
+            request: CompletionRequest {
+                messages,
+                max_tokens: Some(500),
+                temperature: Some(0.3),
+            },
             job_type: "suggest_links".into(),
             note_id,
         })

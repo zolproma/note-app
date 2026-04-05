@@ -13,7 +13,11 @@ use note_storage::SqliteStore;
 #[command(name = "notes", about = "Local-first AI note-taking CLI", version)]
 struct Cli {
     /// Path to the notes database
-    #[arg(long, env = "NOTES_DB", default_value = "~/.local/share/notes/notes.db")]
+    #[arg(
+        long,
+        env = "NOTES_DB",
+        default_value = "~/.local/share/notes/notes.db"
+    )]
     db: String,
 
     /// Output format
@@ -79,9 +83,7 @@ enum Commands {
         action: TagAction,
     },
     /// Show note details
-    Show {
-        id: String,
-    },
+    Show { id: String },
     /// Edit a note
     Edit {
         /// Note ID
@@ -125,9 +127,7 @@ enum Commands {
         action: NotebookAction,
     },
     /// Export a note to stdout
-    Export {
-        id: String,
-    },
+    Export { id: String },
     /// AI-assisted operations (suggest tags, summarize, classify, suggest links)
     Ai {
         #[command(subcommand)]
@@ -197,26 +197,17 @@ pub enum LinkAction {
         workspace: Option<String>,
     },
     /// List outgoing links from a note
-    From {
-        id: String,
-    },
+    From { id: String },
     /// List backlinks to a note
-    To {
-        id: String,
-    },
+    To { id: String },
 }
 
 #[derive(Subcommand)]
 pub enum AliasAction {
     /// Add an alias to a note
-    Add {
-        id: String,
-        alias: String,
-    },
+    Add { id: String, alias: String },
     /// List aliases for a note
-    List {
-        id: String,
-    },
+    List { id: String },
 }
 
 #[derive(Subcommand)]
@@ -277,7 +268,10 @@ fn dirs_home() -> Option<PathBuf> {
 
 pub fn data_dir() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join(".local").join("share").join("notes")
+    PathBuf::from(home)
+        .join(".local")
+        .join("share")
+        .join("notes")
 }
 
 fn open_store(db_path: &str) -> Result<NoteService<SqliteStore>> {
@@ -301,12 +295,23 @@ fn main() -> Result<()> {
 
     match cli.command {
         Commands::Init { name } => commands::init(&svc, &name, cli.format),
-        Commands::New { title, notebook, template, workspace } => {
-            commands::new_note(&svc, &title, notebook.as_deref(), template.as_deref(), workspace.as_deref(), cli.format)
-        }
-        Commands::List { notebook, workspace } => {
-            commands::list_notes(&svc, notebook.as_deref(), workspace.as_deref(), cli.format)
-        }
+        Commands::New {
+            title,
+            notebook,
+            template,
+            workspace,
+        } => commands::new_note(
+            &svc,
+            &title,
+            notebook.as_deref(),
+            template.as_deref(),
+            workspace.as_deref(),
+            cli.format,
+        ),
+        Commands::List {
+            notebook,
+            workspace,
+        } => commands::list_notes(&svc, notebook.as_deref(), workspace.as_deref(), cli.format),
         Commands::Search { query, workspace } => {
             commands::search(&svc, &query, workspace.as_deref(), cli.format)
         }
@@ -318,20 +323,44 @@ fn main() -> Result<()> {
         }
         Commands::Tag { action } => commands::tag(&svc, action, cli.format),
         Commands::Show { id } => commands::show(&svc, &id, cli.format),
-        Commands::Edit { id, title, lifecycle } => {
-            commands::edit(&svc, &id, title.as_deref(), lifecycle.as_deref(), cli.format)
-        }
-        Commands::Move { id, notebook, workspace } => {
-            commands::move_note(&svc, &id, &notebook, workspace.as_deref(), cli.format)
-        }
+        Commands::Edit {
+            id,
+            title,
+            lifecycle,
+        } => commands::edit(
+            &svc,
+            &id,
+            title.as_deref(),
+            lifecycle.as_deref(),
+            cli.format,
+        ),
+        Commands::Move {
+            id,
+            notebook,
+            workspace,
+        } => commands::move_note(&svc, &id, &notebook, workspace.as_deref(), cli.format),
         Commands::Attach { id, file } => commands::attach(&svc, &id, &file, cli.format),
         Commands::Link { action } => commands::link(&svc, action, cli.format),
         Commands::Alias { action } => commands::alias(&svc, action, cli.format),
         Commands::Notebook { action } => commands::notebook(&svc, action, cli.format),
         Commands::Export { id } => commands::export(&svc, &id),
-        Commands::Ai { action, mode, provider, model, api_key } => {
+        Commands::Ai {
+            action,
+            mode,
+            provider,
+            model,
+            api_key,
+        } => {
             let rt = tokio::runtime::Runtime::new()?;
-            rt.block_on(commands::ai_cmd(&svc, action, &mode, &provider, &model, api_key.as_deref(), cli.format))
+            rt.block_on(commands::ai_cmd(
+                &svc,
+                action,
+                &mode,
+                &provider,
+                &model,
+                api_key.as_deref(),
+                cli.format,
+            ))
         }
     }
 }

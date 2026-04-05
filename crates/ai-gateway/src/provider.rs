@@ -18,10 +18,16 @@ pub struct ChatMessage {
 
 impl ChatMessage {
     pub fn system(content: impl Into<String>) -> Self {
-        Self { role: ChatRole::System, content: content.into() }
+        Self {
+            role: ChatRole::System,
+            content: content.into(),
+        }
     }
     pub fn user(content: impl Into<String>) -> Self {
-        Self { role: ChatRole::User, content: content.into() }
+        Self {
+            role: ChatRole::User,
+            content: content.into(),
+        }
     }
 }
 
@@ -60,7 +66,12 @@ pub struct OpenAiCompatProvider {
 }
 
 impl OpenAiCompatProvider {
-    pub fn new(base_url: impl Into<String>, api_key: Option<String>, model: impl Into<String>, is_local: bool) -> Self {
+    pub fn new(
+        base_url: impl Into<String>,
+        api_key: Option<String>,
+        model: impl Into<String>,
+        is_local: bool,
+    ) -> Self {
         Self {
             base_url: base_url.into(),
             api_key,
@@ -77,7 +88,12 @@ impl OpenAiCompatProvider {
 
     /// Convenience: connect to OpenAI
     pub fn openai(api_key: impl Into<String>, model: impl Into<String>) -> Self {
-        Self::new("https://api.openai.com/v1", Some(api_key.into()), model, false)
+        Self::new(
+            "https://api.openai.com/v1",
+            Some(api_key.into()),
+            model,
+            false,
+        )
     }
 }
 
@@ -137,7 +153,10 @@ impl AiProvider for OpenAiCompatProvider {
             req = req.bearer_auth(key);
         }
 
-        let resp = req.send().await.map_err(|e| CoreError::Storage(format!("AI request failed: {e}")))?;
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| CoreError::Storage(format!("AI request failed: {e}")))?;
 
         if !resp.status().is_success() {
             let status = resp.status();
@@ -156,7 +175,10 @@ impl AiProvider for OpenAiCompatProvider {
             .next()
             .ok_or_else(|| CoreError::Storage("AI returned no choices".into()))?;
 
-        let usage = api_resp.usage.unwrap_or(ApiUsage { prompt_tokens: 0, completion_tokens: 0 });
+        let usage = api_resp.usage.unwrap_or(ApiUsage {
+            prompt_tokens: 0,
+            completion_tokens: 0,
+        });
 
         Ok(CompletionResponse {
             content: choice.message.content,

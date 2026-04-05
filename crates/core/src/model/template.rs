@@ -82,10 +82,9 @@ impl Template {
                 Block::new(note_id, BlockType::FeedbackAction, ""),
             ],
 
-            TemplateKind::DailyLog => vec![
-                Block::heading(note_id, "Today"),
-                Block::text(note_id, ""),
-            ],
+            TemplateKind::DailyLog => {
+                vec![Block::heading(note_id, "Today"), Block::text(note_id, "")]
+            }
 
             TemplateKind::ProjectRetrospective => vec![
                 Block::heading(note_id, "What went well"),

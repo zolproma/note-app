@@ -20,7 +20,9 @@ fn workspace_creates_inbox_and_notes_notebooks() {
     assert!(notebooks.len() >= 2, "should have at least Inbox + Notes");
     assert!(notebooks.iter().any(|nb| nb.is_inbox), "should have inbox");
     assert!(
-        notebooks.iter().any(|nb| !nb.is_inbox && nb.name == "Notes"),
+        notebooks
+            .iter()
+            .any(|nb| !nb.is_inbox && nb.name == "Notes"),
         "should have default Notes notebook"
     );
 }
@@ -32,7 +34,10 @@ fn create_note_in_fresh_workspace() {
     let svc = fresh_service();
     let ws = svc.create_workspace("Fresh").unwrap();
     let notebooks = svc.list_notebooks(ws.id).unwrap();
-    let notes_nb = notebooks.iter().find(|nb| !nb.is_inbox).expect("default notebook");
+    let notes_nb = notebooks
+        .iter()
+        .find(|nb| !nb.is_inbox)
+        .expect("default notebook");
 
     let note = svc.create_note(notes_nb.id, "First Note", None).unwrap();
     assert_eq!(note.title, "First Note");
@@ -201,7 +206,9 @@ fn saved_search_crud() {
         lifecycle: None,
         pinned: None,
     };
-    let ss = svc.create_saved_search(ws.id, "Rust notes", filter).unwrap();
+    let ss = svc
+        .create_saved_search(ws.id, "Rust notes", filter)
+        .unwrap();
     assert_eq!(ss.name, "Rust notes");
 
     let list = svc.list_saved_searches(ws.id).unwrap();
@@ -224,10 +231,19 @@ fn create_note_with_template() {
     let note = svc
         .create_note(nb.id, "Cornell Note", Some(TemplateKind::Cornell))
         .unwrap();
-    assert!(note.blocks.len() >= 3, "Cornell template should have multiple blocks");
+    assert!(
+        note.blocks.len() >= 3,
+        "Cornell template should have multiple blocks"
+    );
 
-    let has_cue = note.blocks.iter().any(|b| b.block_type == BlockType::CornellCue);
-    let has_summary = note.blocks.iter().any(|b| b.block_type == BlockType::CornellSummary);
+    let has_cue = note
+        .blocks
+        .iter()
+        .any(|b| b.block_type == BlockType::CornellCue);
+    let has_summary = note
+        .blocks
+        .iter()
+        .any(|b| b.block_type == BlockType::CornellSummary);
     assert!(has_cue, "Cornell should have a cue block");
     assert!(has_summary, "Cornell should have a summary block");
 }

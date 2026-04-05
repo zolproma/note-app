@@ -1,11 +1,13 @@
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use note_core::ai_policy::AiMode;
-use note_core::model::{Block, BlockType, LinkType, Note, NoteLifecycle, SearchFilter, TemplateKind};
-use note_core::service::NoteService;
 use note_ai_gateway::provider::OpenAiCompatProvider;
 use note_ai_gateway::service::{AiGateway, AiSuggestion, SuggestionStatus};
+use note_core::ai_policy::AiMode;
+use note_core::model::{
+    Block, BlockType, LinkType, Note, NoteLifecycle, SearchFilter, TemplateKind,
+};
+use note_core::service::NoteService;
 use note_storage::SqliteStore;
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -232,7 +234,9 @@ fn create_note(
         .map(|t| t.parse::<TemplateKind>())
         .transpose()
         .map_err(|e| e.to_string())?;
-    let note = svc.create_note(nb_id, &title, tmpl).map_err(|e| e.to_string())?;
+    let note = svc
+        .create_note(nb_id, &title, tmpl)
+        .map_err(|e| e.to_string())?;
     Ok(NoteItem::from(&note))
 }
 
@@ -245,10 +249,16 @@ fn capture_note(state: State<'_, AppState>, content: String) -> Result<NoteItem,
 }
 
 #[tauri::command]
-fn update_note_title(state: State<'_, AppState>, id: String, title: String) -> Result<NoteItem, String> {
+fn update_note_title(
+    state: State<'_, AppState>,
+    id: String,
+    title: String,
+) -> Result<NoteItem, String> {
     let svc = state.svc.lock().unwrap();
     let uuid: Uuid = id.parse().map_err(|_| "invalid UUID".to_string())?;
-    let note = svc.update_note_title(uuid, &title).map_err(|e| e.to_string())?;
+    let note = svc
+        .update_note_title(uuid, &title)
+        .map_err(|e| e.to_string())?;
     Ok(NoteItem::from(&note))
 }
 
@@ -277,7 +287,8 @@ fn update_note_blocks(
             block
         })
         .collect();
-    svc.update_note_blocks(uuid, new_blocks).map_err(|e| e.to_string())?;
+    svc.update_note_blocks(uuid, new_blocks)
+        .map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -323,7 +334,9 @@ fn move_note_to_notebook(
 ) -> Result<NoteItem, String> {
     let svc = state.svc.lock().unwrap();
     let uuid: Uuid = id.parse().map_err(|_| "invalid UUID".to_string())?;
-    let nb_id: Uuid = notebook_id.parse().map_err(|_| "invalid notebook ID".to_string())?;
+    let nb_id: Uuid = notebook_id
+        .parse()
+        .map_err(|_| "invalid notebook ID".to_string())?;
     let note = svc.move_note(uuid, nb_id).map_err(|e| e.to_string())?;
     Ok(NoteItem::from(&note))
 }
@@ -345,7 +358,9 @@ fn set_lifecycle(
     let svc = state.svc.lock().unwrap();
     let uuid: Uuid = id.parse().map_err(|_| "invalid UUID".to_string())?;
     let lc: NoteLifecycle = lifecycle.parse().map_err(|e: String| e)?;
-    let note = svc.set_note_lifecycle(uuid, lc).map_err(|e| e.to_string())?;
+    let note = svc
+        .set_note_lifecycle(uuid, lc)
+        .map_err(|e| e.to_string())?;
     Ok(NoteItem::from(&note))
 }
 
@@ -376,10 +391,14 @@ fn add_tag(
     let nid: Uuid = note_id.parse().map_err(|_| "invalid UUID".to_string())?;
 
     // Find or create the tag
-    let tag = if let Some(existing) = svc.find_tag_by_name(ws_id, &tag_name).map_err(|e| e.to_string())? {
+    let tag = if let Some(existing) = svc
+        .find_tag_by_name(ws_id, &tag_name)
+        .map_err(|e| e.to_string())?
+    {
         existing
     } else {
-        svc.create_tag(ws_id, &tag_name).map_err(|e| e.to_string())?
+        svc.create_tag(ws_id, &tag_name)
+            .map_err(|e| e.to_string())?
     };
     svc.tag_note(nid, tag.id).map_err(|e| e.to_string())?;
     Ok(TagItem {
@@ -389,13 +408,11 @@ fn add_tag(
 }
 
 #[tauri::command]
-fn remove_tag(
-    state: State<'_, AppState>,
-    note_id: String,
-    tag_id: String,
-) -> Result<(), String> {
+fn remove_tag(state: State<'_, AppState>, note_id: String, tag_id: String) -> Result<(), String> {
     let svc = state.svc.lock().unwrap();
-    let nid: Uuid = note_id.parse().map_err(|_| "invalid note UUID".to_string())?;
+    let nid: Uuid = note_id
+        .parse()
+        .map_err(|_| "invalid note UUID".to_string())?;
     let tid: Uuid = tag_id.parse().map_err(|_| "invalid tag UUID".to_string())?;
     svc.untag_note(nid, tid).map_err(|e| e.to_string())
 }
@@ -425,10 +442,7 @@ fn list_links_from(state: State<'_, AppState>, id: String) -> Result<Vec<LinkIte
 }
 
 #[tauri::command]
-fn resolve_wiki_link(
-    state: State<'_, AppState>,
-    text: String,
-) -> Result<Option<String>, String> {
+fn resolve_wiki_link(state: State<'_, AppState>, text: String) -> Result<Option<String>, String> {
     let ws_id = ensure_workspace(&state)?;
     let svc = state.svc.lock().unwrap();
     let result = svc.resolve_link(ws_id, &text).map_err(|e| e.to_string())?;
@@ -442,10 +456,19 @@ fn create_wiki_link(
     target_id: String,
 ) -> Result<LinkItem, String> {
     let svc = state.svc.lock().unwrap();
-    let src: Uuid = source_id.parse().map_err(|_| "invalid source UUID".to_string())?;
-    let tgt: Uuid = target_id.parse().map_err(|_| "invalid target UUID".to_string())?;
-    let link = svc.create_link(src, tgt, LinkType::WikiLink).map_err(|e| e.to_string())?;
-    let title = svc.get_note(tgt).map(|n| n.title).unwrap_or_else(|_| "Unknown".into());
+    let src: Uuid = source_id
+        .parse()
+        .map_err(|_| "invalid source UUID".to_string())?;
+    let tgt: Uuid = target_id
+        .parse()
+        .map_err(|_| "invalid target UUID".to_string())?;
+    let link = svc
+        .create_link(src, tgt, LinkType::WikiLink)
+        .map_err(|e| e.to_string())?;
+    let title = svc
+        .get_note(tgt)
+        .map(|n| n.title)
+        .unwrap_or_else(|_| "Unknown".into());
     Ok(LinkItem {
         id: link.id.to_string(),
         source_note_id: link.source_note_id.to_string(),
@@ -623,7 +646,9 @@ fn get_graph_data(state: State<'_, AppState>) -> Result<GraphData, String> {
 fn get_related_notes(state: State<'_, AppState>, id: String) -> Result<Vec<NoteItem>, String> {
     let svc = state.svc.lock().unwrap();
     let uuid: Uuid = id.parse().map_err(|_| "invalid UUID".to_string())?;
-    let notes = svc.find_related_notes(uuid, 10).map_err(|e| e.to_string())?;
+    let notes = svc
+        .find_related_notes(uuid, 10)
+        .map_err(|e| e.to_string())?;
     Ok(notes.iter().map(NoteItem::from).collect())
 }
 
@@ -711,10 +736,7 @@ fn delete_attachment(state: State<'_, AppState>, id: String) -> Result<(), Strin
 }
 
 #[tauri::command]
-fn get_attachment_path(
-    state: State<'_, AppState>,
-    id: String,
-) -> Result<String, String> {
+fn get_attachment_path(state: State<'_, AppState>, id: String) -> Result<String, String> {
     let svc = state.svc.lock().unwrap();
     let uuid: Uuid = id.parse().map_err(|_| "invalid UUID".to_string())?;
     let att = svc.get_attachment(uuid).map_err(|e| e.to_string())?;
@@ -769,7 +791,10 @@ fn build_ai_gateway(config: &AiConfig) -> Result<AiGateway<OpenAiCompatProvider>
     };
     let provider = match config.provider.as_str() {
         "openai" => {
-            let key = config.api_key.clone().ok_or("API key required for openai")?;
+            let key = config
+                .api_key
+                .clone()
+                .ok_or("API key required for openai")?;
             OpenAiCompatProvider::openai(key, &config.model)
         }
         _ => OpenAiCompatProvider::ollama(&config.model),
@@ -787,7 +812,9 @@ async fn ai_suggest_tags(
     let nid: Uuid = note_id.parse().map_err(|_| "invalid UUID".to_string())?;
     let prepared = {
         let svc = state.svc.lock().unwrap();
-        gateway.prepare_suggest_tags(&*svc, nid).map_err(|e| e.to_string())?
+        gateway
+            .prepare_suggest_tags(&*svc, nid)
+            .map_err(|e| e.to_string())?
     };
     let suggestion = gateway.execute(prepared).await.map_err(|e| e.to_string())?;
     Ok(AiSuggestionItem::from(&suggestion))
@@ -803,7 +830,9 @@ async fn ai_summarize(
     let nid: Uuid = note_id.parse().map_err(|_| "invalid UUID".to_string())?;
     let prepared = {
         let svc = state.svc.lock().unwrap();
-        gateway.prepare_summarize(&*svc, nid).map_err(|e| e.to_string())?
+        gateway
+            .prepare_summarize(&*svc, nid)
+            .map_err(|e| e.to_string())?
     };
     let suggestion = gateway.execute(prepared).await.map_err(|e| e.to_string())?;
     Ok(AiSuggestionItem::from(&suggestion))
@@ -820,7 +849,9 @@ async fn ai_classify(
     let nid: Uuid = note_id.parse().map_err(|_| "invalid UUID".to_string())?;
     let prepared = {
         let svc = state.svc.lock().unwrap();
-        gateway.prepare_classify(&*svc, nid, ws_id).map_err(|e| e.to_string())?
+        gateway
+            .prepare_classify(&*svc, nid, ws_id)
+            .map_err(|e| e.to_string())?
     };
     let suggestion = gateway.execute(prepared).await.map_err(|e| e.to_string())?;
     Ok(AiSuggestionItem::from(&suggestion))
@@ -837,7 +868,9 @@ async fn ai_suggest_links(
     let nid: Uuid = note_id.parse().map_err(|_| "invalid UUID".to_string())?;
     let prepared = {
         let svc = state.svc.lock().unwrap();
-        gateway.prepare_suggest_links(&*svc, nid, ws_id).map_err(|e| e.to_string())?
+        gateway
+            .prepare_suggest_links(&*svc, nid, ws_id)
+            .map_err(|e| e.to_string())?
     };
     let suggestion = gateway.execute(prepared).await.map_err(|e| e.to_string())?;
     Ok(AiSuggestionItem::from(&suggestion))

@@ -84,17 +84,10 @@ pub trait NoteStore {
     fn delete_saved_search(&self, id: Uuid) -> Result<(), CoreError>;
 
     // Graph data: get all notes with their link counts for graph visualization
-    fn get_graph_data(
-        &self,
-        workspace_id: Uuid,
-    ) -> Result<Vec<(Note, Vec<Link>)>, CoreError>;
+    fn get_graph_data(&self, workspace_id: Uuid) -> Result<Vec<(Note, Vec<Link>)>, CoreError>;
 
     // Related notes: find notes sharing tags or links with the given note
-    fn find_related_notes(
-        &self,
-        note_id: Uuid,
-        limit: usize,
-    ) -> Result<Vec<Note>, CoreError>;
+    fn find_related_notes(&self, note_id: Uuid, limit: usize) -> Result<Vec<Note>, CoreError>;
 }
 
 /// Core service that all entry points (CLI, GUI) go through
@@ -202,7 +195,11 @@ impl<S: NoteStore> NoteService<S> {
         Ok(note)
     }
 
-    pub fn set_note_lifecycle(&self, id: Uuid, lifecycle: NoteLifecycle) -> Result<Note, CoreError> {
+    pub fn set_note_lifecycle(
+        &self,
+        id: Uuid,
+        lifecycle: NoteLifecycle,
+    ) -> Result<Note, CoreError> {
         let mut note = self.store.get_note(id)?;
         note.lifecycle = lifecycle;
         note.updated_at = Utc::now();
@@ -291,7 +288,11 @@ impl<S: NoteStore> NoteService<S> {
         self.store.list_tags(workspace_id)
     }
 
-    pub fn find_tag_by_name(&self, workspace_id: Uuid, name: &str) -> Result<Option<Tag>, CoreError> {
+    pub fn find_tag_by_name(
+        &self,
+        workspace_id: Uuid,
+        name: &str,
+    ) -> Result<Option<Tag>, CoreError> {
         self.store.find_tag_by_name(workspace_id, name)
     }
 
@@ -323,9 +324,7 @@ impl<S: NoteStore> NoteService<S> {
         std::fs::copy(src_path, &dest)
             .map_err(|e| CoreError::Storage(format!("copy file: {e}")))?;
 
-        let size = std::fs::metadata(&dest)
-            .map(|m| m.len())
-            .unwrap_or(0);
+        let size = std::fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);
 
         let att = Attachment::new(note_id, filename, media_type, storage_name, size);
         self.store.create_attachment(&att)?;
@@ -351,7 +350,12 @@ impl<S: NoteStore> NoteService<S> {
 
     // === Links ===
 
-    pub fn create_link(&self, source_id: Uuid, target_id: Uuid, link_type: LinkType) -> Result<Link, CoreError> {
+    pub fn create_link(
+        &self,
+        source_id: Uuid,
+        target_id: Uuid,
+        link_type: LinkType,
+    ) -> Result<Link, CoreError> {
         let mut link = Link::wiki_link(source_id, target_id);
         link.link_type = link_type;
         self.store.create_link(&link)?;
@@ -438,20 +442,13 @@ impl<S: NoteStore> NoteService<S> {
 
     // === Graph ===
 
-    pub fn get_graph_data(
-        &self,
-        workspace_id: Uuid,
-    ) -> Result<Vec<(Note, Vec<Link>)>, CoreError> {
+    pub fn get_graph_data(&self, workspace_id: Uuid) -> Result<Vec<(Note, Vec<Link>)>, CoreError> {
         self.store.get_graph_data(workspace_id)
     }
 
     // === Related Notes ===
 
-    pub fn find_related_notes(
-        &self,
-        note_id: Uuid,
-        limit: usize,
-    ) -> Result<Vec<Note>, CoreError> {
+    pub fn find_related_notes(&self, note_id: Uuid, limit: usize) -> Result<Vec<Note>, CoreError> {
         self.store.find_related_notes(note_id, limit)
     }
 }
