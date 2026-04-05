@@ -261,8 +261,8 @@ impl NoteStore for SqliteStore {
                     note.title,
                     note.template_id.map(|id| id.to_string()),
                     note.lifecycle.to_string(),
-                    serde_json::to_value(&note.visibility).unwrap().as_str().unwrap(),
-                    serde_json::to_value(&note.ai_policy).unwrap().as_str().unwrap(),
+                    serde_json::to_value(note.visibility).unwrap().as_str().unwrap(),
+                    serde_json::to_value(note.ai_policy).unwrap().as_str().unwrap(),
                     note.pinned as i32,
                     note.created_at.to_rfc3339(),
                     note.updated_at.to_rfc3339(),
@@ -312,8 +312,8 @@ impl NoteStore for SqliteStore {
                 params![
                     note.title,
                     note.lifecycle.to_string(),
-                    serde_json::to_value(&note.visibility).unwrap().as_str().unwrap(),
-                    serde_json::to_value(&note.ai_policy).unwrap().as_str().unwrap(),
+                    serde_json::to_value(note.visibility).unwrap().as_str().unwrap(),
+                    serde_json::to_value(note.ai_policy).unwrap().as_str().unwrap(),
                     note.pinned as i32,
                     now.to_rfc3339(),
                     note.id.to_string(),
@@ -659,7 +659,7 @@ impl NoteStore for SqliteStore {
                     att.id.to_string(),
                     att.note_id.to_string(),
                     att.filename,
-                    serde_json::to_value(&att.media_type).unwrap().as_str().unwrap(),
+                    serde_json::to_value(att.media_type).unwrap().as_str().unwrap(),
                     att.storage_path,
                     att.size_bytes as i64,
                     att.mime_type,
@@ -736,7 +736,7 @@ impl NoteStore for SqliteStore {
                     link.target_note_id.to_string(),
                     link.source_block_id.map(|id| id.to_string()),
                     link.target_block_id.map(|id| id.to_string()),
-                    serde_json::to_value(&link.link_type).unwrap().as_str().unwrap(),
+                    serde_json::to_value(link.link_type).unwrap().as_str().unwrap(),
                     link.created_at.to_rfc3339(),
                 ],
             )
@@ -863,14 +863,14 @@ impl NoteStore for SqliteStore {
         let mut idx = 2;
 
         // FTS query
-        if let Some(ref q) = filter.query {
-            if !q.is_empty() {
-                conditions.push(format!(
-                    "n.id IN (SELECT note_id FROM notes_fts WHERE notes_fts MATCH ?{idx})"
-                ));
-                param_values.push(q.clone());
-                idx += 1;
-            }
+        if let Some(ref q) = filter.query
+            && !q.is_empty()
+        {
+            conditions.push(format!(
+                "n.id IN (SELECT note_id FROM notes_fts WHERE notes_fts MATCH ?{idx})"
+            ));
+            param_values.push(q.clone());
+            idx += 1;
         }
 
         // Lifecycle filter
