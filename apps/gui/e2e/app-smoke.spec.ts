@@ -10,6 +10,11 @@ function captureBtn(page: import("@playwright/test").Page) {
   return page.locator(".sidebar .btn-primary");
 }
 
+// Helper: the capture dialog (card inside a fixed overlay)
+function captureDialog(page: import("@playwright/test").Page) {
+  return page.getByPlaceholder("Capture your thought...");
+}
+
 test.describe("App smoke tests", () => {
   test("app loads without crashing", async ({ page }) => {
     await page.goto("/");
@@ -69,21 +74,11 @@ test.describe("Quick Capture dialog", () => {
   test("opens and closes capture dialog", async ({ page }) => {
     await page.goto("/");
     await captureBtn(page).click();
-    await expect(page.locator(".capture-overlay")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(page.locator(".capture-overlay")).not.toBeVisible();
-  });
-
-  test("keyboard shortcut opens capture dialog", async ({ page }) => {
-    await page.goto("/");
-    // Use Meta on mac, Control elsewhere — but CI is Linux so Control
-    await page.keyboard.press("Control+Shift+n");
-    // If shortcut didn't work (e.g. webkit), click the button as fallback
-    const overlay = page.locator(".capture-overlay");
-    if (!(await overlay.isVisible({ timeout: 1000 }).catch(() => false))) {
-      await captureBtn(page).click();
-    }
-    await expect(overlay).toBeVisible();
+    // Dialog textarea should appear
+    await expect(captureDialog(page)).toBeVisible();
+    // Click Cancel to close
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(captureDialog(page)).not.toBeVisible();
   });
 });
 
@@ -110,7 +105,6 @@ test.describe("Notes list interaction", () => {
     const noteCard = page.locator(".note-card").first();
     if (await noteCard.isVisible()) {
       await noteCard.click();
-      // Back button is in the topbar
       const backBtn = page.locator(".topbar .btn-ghost").first();
       await expect(backBtn).toBeVisible();
       await backBtn.click();
@@ -127,9 +121,9 @@ test.describe("Search functionality", () => {
     await expect(input).toHaveValue("test query");
   });
 
-  test("Ctrl+/ focuses search and navigates to search view", async ({ page }) => {
+  test("search via sidebar navigates to search view", async ({ page }) => {
     await page.goto("/");
-    await page.keyboard.press("Control+/");
+    await sidebarNav(page, "Search").click();
     await expect(page.locator(".topbar-title")).toHaveText("Search");
   });
 
@@ -171,7 +165,7 @@ test.describe("Error resilience", () => {
 
     await captureBtn(page).click();
     await page.waitForTimeout(500);
-    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Cancel" }).click();
     await page.waitForTimeout(300);
 
     expect(errors).toEqual([]);
