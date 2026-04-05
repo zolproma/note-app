@@ -90,8 +90,120 @@ jobs:
             target/${{ matrix.target }}/release/bundle/macos/*.app
           if-no-files-found: ignore
 
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r27c
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build frontend
+        run: pnpm build:gui
+
+      - name: Init Tauri Android
+        working-directory: apps/gui
+        run: pnpm tauri android init
+
+      - name: Build Android APK
+        working-directory: apps/gui
+        env:
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: pnpm tauri android build --apk
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: note-app-android
+          path: |
+            apps/gui/src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: ignore
+
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build frontend
+        run: pnpm build:gui
+
+      - name: Init Tauri iOS
+        working-directory: apps/gui
+        run: pnpm tauri ios init
+
+      - name: Build iOS (unsigned)
+        working-directory: apps/gui
+        run: pnpm tauri ios build --export-method debug
+
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: note-app-ios
+          path: |
+            apps/gui/src-tauri/gen/apple/build/**/*.ipa
+            apps/gui/src-tauri/gen/apple/build/**/*.app
+          if-no-files-found: ignore
+
   release:
-    needs: build
+    needs: [build, build-android, build-ios]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
 
