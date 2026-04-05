@@ -268,10 +268,10 @@ fn update_note_blocks(
             let bt: BlockType = serde_json::from_value(serde_json::Value::String(b.block_type))
                 .unwrap_or(BlockType::Text);
             let mut block = Block::new(uuid, bt, b.content);
-            if let Some(bid) = b.id {
-                if let Ok(parsed) = bid.parse() {
-                    block.id = parsed;
-                }
+            if let Some(bid) = b.id
+                && let Ok(parsed) = bid.parse()
+            {
+                block.id = parsed;
             }
             block.sort_order = i as i32;
             block
@@ -663,7 +663,7 @@ fn list_note_attachments(
             id: a.id.to_string(),
             note_id: a.note_id.to_string(),
             filename: a.filename.clone(),
-            media_type: serde_json::to_value(&a.media_type)
+            media_type: serde_json::to_value(a.media_type)
                 .ok()
                 .and_then(|v| v.as_str().map(String::from))
                 .unwrap_or_else(|| "other".into()),
@@ -691,7 +691,7 @@ fn upload_attachment(
         id: att.id.to_string(),
         note_id: att.note_id.to_string(),
         filename: att.filename,
-        media_type: serde_json::to_value(&att.media_type)
+        media_type: serde_json::to_value(att.media_type)
             .ok()
             .and_then(|v| v.as_str().map(String::from))
             .unwrap_or_else(|| "other".into()),

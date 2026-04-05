@@ -263,10 +263,10 @@ pub enum NotebookAction {
 }
 
 fn expand_path(path: &str) -> PathBuf {
-    if path.starts_with("~/") {
-        if let Some(home) = dirs_home() {
-            return home.join(&path[2..]);
-        }
+    if let Some(stripped) = path.strip_prefix("~/")
+        && let Some(home) = dirs_home()
+    {
+        return home.join(stripped);
     }
     PathBuf::from(path)
 }
