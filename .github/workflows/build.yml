@@ -10,7 +10,40 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libgtk-3-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev
+
+      - name: Run Rust tests
+        run: cargo test --workspace
+
+      - name: Run Clippy lint
+        run: cargo clippy --workspace -- -D warnings
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
   build:
+    needs: test
     strategy:
       fail-fast: false
       matrix:
@@ -91,6 +124,7 @@ jobs:
           if-no-files-found: ignore
 
   build-android:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -155,6 +189,7 @@ jobs:
           if-no-files-found: ignore
 
   build-ios:
+    needs: test
     runs-on: macos-latest
 
     steps:
