@@ -5,7 +5,7 @@ use crate::error::CoreError;
 use crate::model::{AiPolicy, VisibilityPolicy};
 
 /// AI operating mode - system-level hard constraint
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AiMode {
     /// Only local models, no remote calls whatsoever
@@ -13,13 +13,8 @@ pub enum AiMode {
     /// Only whitelisted commercial API providers with zero-retention
     PrivateApi,
     /// All remote AI completely disabled
+    #[default]
     BlockedRemote,
-}
-
-impl Default for AiMode {
-    fn default() -> Self {
-        Self::BlockedRemote
-    }
 }
 
 /// Defines what an AI job is allowed to access

@@ -6,19 +6,14 @@ use super::block::Block;
 
 /// Lifecycle state of a note in the workflow:
 /// Capture -> Inbox -> Active -> Archived -> Trashed
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum NoteLifecycle {
+    #[default]
     Inbox,
     Active,
     Archived,
     Trashed,
-}
-
-impl Default for NoteLifecycle {
-    fn default() -> Self {
-        Self::Inbox
-    }
 }
 
 impl std::fmt::Display for NoteLifecycle {
@@ -46,36 +41,26 @@ impl std::str::FromStr for NoteLifecycle {
 }
 
 /// Controls who can see this note
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum VisibilityPolicy {
+    #[default]
     Normal,
     Sensitive,
     Private,
 }
 
-impl Default for VisibilityPolicy {
-    fn default() -> Self {
-        Self::Normal
-    }
-}
-
 /// Controls AI access to this note
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AiPolicy {
     /// AI can read this note if user grants scope
+    #[default]
     Allowed,
     /// AI cannot access this note under any circumstances
     NoAi,
     /// AI cannot send this note to remote providers
     NoRemote,
-}
-
-impl Default for AiPolicy {
-    fn default() -> Self {
-        Self::Allowed
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
