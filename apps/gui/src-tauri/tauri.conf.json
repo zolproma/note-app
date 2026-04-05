@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicholasthompson/tauri/tauri-v2-schema/crates/tauri-cli/schema.json",
-  "productName": "Notes",
+  "productName": "ono",
   "version": "0.1.0",
-  "identifier": "com.notes.app",
+  "identifier": "com.ono.app",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Notes",
+        "title": "ono",
         "width": 1200,
         "height": 800,
         "minWidth": 800,
@@ -33,7 +33,8 @@
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/icon.ico",
+      "icons/icon.png"
     ]
   }
 }

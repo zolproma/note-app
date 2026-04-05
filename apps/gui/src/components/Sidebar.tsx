@@ -18,9 +18,9 @@ function Sidebar({ currentView, onNavigate, onCapture }: SidebarProps) {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="brand-icon">N</div>
+        <div className="brand-icon">O</div>
         <div>
-          <div className="brand-name">Notes</div>
+          <div className="brand-name">ono</div>
           <div className="brand-sub">Local-first</div>
         </div>
       </div>
