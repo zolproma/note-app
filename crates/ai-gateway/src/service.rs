@@ -263,7 +263,7 @@ impl<P: AiProvider> AiGateway<P> {
         mode: AiMode,
     ) -> Result<(), CoreError> {
         let scope_json = serde_json::to_string(scope).unwrap_or_default();
-        let mode_str = serde_json::to_value(&mode)
+        let mode_str = serde_json::to_value(mode)
             .ok()
             .and_then(|v| v.as_str().map(String::from))
             .unwrap_or_else(|| format!("{mode:?}"));
