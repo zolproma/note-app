@@ -1,0 +1,15 @@
+[package]
+name = "note-storage"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+note-core = { path = "../core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+rusqlite = { workspace = true }
+tracing = { workspace = true }

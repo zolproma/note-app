@@ -1,0 +1,25 @@
+[package]
+name = "notes-gui"
+version = "0.1.0"
+edition = "2024"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+note-core = { path = "../../../crates/core" }
+note-storage = { path = "../../../crates/storage" }
+note-ai-gateway = { path = "../../../crates/ai-gateway" }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[lib]
+name = "notes_gui_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]

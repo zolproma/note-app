@@ -1,0 +1,23 @@
+[package]
+name = "notes-cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "notes"
+path = "src/main.rs"
+
+[dependencies]
+note-core = { path = "../../crates/core" }
+note-storage = { path = "../../crates/storage" }
+note-ai-gateway = { path = "../../crates/ai-gateway" }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+tabled = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tokio = { workspace = true }

@@ -1,0 +1,9 @@
+{
+  "name": "note-app",
+  "private": true,
+  "scripts": {
+    "dev:gui": "pnpm --filter @note-app/gui dev",
+    "build:gui": "pnpm --filter @note-app/gui build",
+    "dev:tokens": "pnpm --filter @note-app/design-tokens build"
+  }
+}

@@ -1,0 +1,44 @@
+:root {
+  /* Background */
+  --bg: #f5f5f7;
+  --sidebar-bg: rgba(255, 255, 255, 0.72);
+  --sidebar-w: 240px;
+  --card-bg: #ffffff;
+  --line: rgba(0, 0, 0, 0.06);
+
+  /* Text */
+  --text: #1d1d1f;
+  --secondary: #48484a;
+  --muted: #86868b;
+  --subtle: #aeaeb2;
+
+  /* Accent — slate blue, never vivid */
+  --primary: #5d8bb3;
+  --primary-light: rgba(93, 139, 179, 0.08);
+  --primary-deep: #4a7396;
+
+  /* Status — desaturated, soft tones */
+  --green: #5d9b7a;
+  --green-light: rgba(93, 155, 122, 0.08);
+  --warn: #c4a050;
+  --warn-light: rgba(196, 160, 80, 0.08);
+  --danger: #b5605c;
+  --danger-light: rgba(181, 96, 92, 0.08);
+  --accent: #8685ad;
+  --accent-light: rgba(134, 133, 173, 0.08);
+
+  /* Radius */
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-sm: 8px;
+
+  /* Shadows */
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.03);
+
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+}
