@@ -2,33 +2,13 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { invoke, type NoteDetail, type NoteItem, type BlockItem, type TagItem, type LinkItem, type NotebookItem } from "../tauri";
 import AttachmentPanel from "./AttachmentPanel";
 import AiPanel from "./AiPanel";
+import { useI18n } from "../i18n";
 
 interface NoteEditorViewProps {
   noteId: string;
   onBack: () => void;
   onOpenNote: (id: string) => void;
 }
-
-const BLOCK_TYPES = [
-  { value: "text", label: "Text" },
-  { value: "heading", label: "Heading" },
-  { value: "code", label: "Code" },
-  { value: "quote", label: "Quote" },
-  { value: "cornell_cue", label: "Cue" },
-  { value: "cornell_summary", label: "Summary" },
-  { value: "zettel_atom", label: "Atomic Idea" },
-  { value: "zettel_source", label: "Source" },
-  { value: "feedback_expected", label: "Expected" },
-  { value: "feedback_actual", label: "Actual" },
-  { value: "feedback_deviation", label: "Deviation" },
-  { value: "feedback_cause", label: "Cause" },
-  { value: "feedback_action", label: "Action" },
-  { value: "divider", label: "Divider" },
-];
-
-const blockTypeLabels: Record<string, string> = Object.fromEntries(
-  BLOCK_TYPES.map((bt) => [bt.value, bt.label])
-);
 
 // Color accents for specialized block types
 const blockTypeAccent: Record<string, string> = {
@@ -47,6 +27,7 @@ const blockTypeAccent: Record<string, string> = {
 };
 
 function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
+  const t = useI18n();
   const [note, setNote] = useState<NoteDetail | null>(null);
   const [title, setTitle] = useState("");
   const [blocks, setBlocks] = useState<BlockItem[]>([]);
@@ -70,6 +51,28 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
 
   // Block focus tracking
   const blockRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
+
+  const BLOCK_TYPES = useMemo(() => [
+    { value: "text", label: t.blockText },
+    { value: "heading", label: t.blockHeading },
+    { value: "code", label: t.blockCode },
+    { value: "quote", label: t.blockQuote },
+    { value: "cornell_cue", label: t.blockCue },
+    { value: "cornell_summary", label: t.blockSummary },
+    { value: "zettel_atom", label: t.blockAtomicIdea },
+    { value: "zettel_source", label: t.blockSource },
+    { value: "feedback_expected", label: t.blockExpected },
+    { value: "feedback_actual", label: t.blockActual },
+    { value: "feedback_deviation", label: t.blockDeviation },
+    { value: "feedback_cause", label: t.blockCause },
+    { value: "feedback_action", label: t.blockAction },
+    { value: "divider", label: t.blockDivider },
+  ], [t]);
+
+  const blockTypeLabels: Record<string, string> = useMemo(
+    () => Object.fromEntries(BLOCK_TYPES.map((bt) => [bt.value, bt.label])),
+    [BLOCK_TYPES],
+  );
 
   // Wiki-link detection: extract all [[...]] from blocks
   const detectedWikiLinks = useMemo(() => {
@@ -251,7 +254,7 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
     try {
       await invoke("remove_tag", { noteId, tagId });
       setNote((prev) =>
-        prev ? { ...prev, tags: prev.tags.filter((t) => t.id !== tagId) } : prev
+        prev ? { ...prev, tags: prev.tags.filter((tag) => tag.id !== tagId) } : prev
       );
     } catch (e) {
       console.error("Remove tag failed:", e);
@@ -288,15 +291,15 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
           value={title}
           onChange={(e) => { setTitle(e.target.value); setDirty(true); }}
           className="editor-title"
-          placeholder="Untitled"
+          placeholder={t.untitled}
         />
 
         {/* Meta row */}
         <div className="editor-meta">
           <span className={`note-lifecycle ${note.lifecycle}`}>{note.lifecycle}</span>
-          {note.tags.map((t) => (
-            <span key={t.id} className="tag-badge tag-removable" onClick={() => handleRemoveTag(t.id)}>
-              {t.name} <span className="tag-remove">&times;</span>
+          {note.tags.map((tag) => (
+            <span key={tag.id} className="tag-badge tag-removable" onClick={() => handleRemoveTag(tag.id)}>
+              {tag.name} <span className="tag-remove">&times;</span>
             </span>
           ))}
           {showTagInput ? (
@@ -344,19 +347,19 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
                       className="block-action-btn"
                       onClick={() => moveBlock(i, "up")}
                       disabled={i === 0}
-                      title="Move up (Alt+Up)"
+                      title={t.moveUp}
                     >&#x25B2;</button>
                     <button
                       className="block-action-btn"
                       onClick={() => moveBlock(i, "down")}
                       disabled={i === blocks.length - 1}
-                      title="Move down (Alt+Down)"
+                      title={t.moveDown}
                     >&#x25BC;</button>
                     <button
                       className="block-action-btn block-action-delete"
                       onClick={() => deleteBlock(i)}
                       disabled={blocks.length <= 1}
-                      title="Delete block"
+                      title={t.deleteBlock}
                     >&#x2715;</button>
                   </div>
                 </div>
@@ -385,25 +388,25 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
         <div className="editor-bottom-bar">
           <div className="editor-bottom-left">
             <button className="btn btn-ghost" onClick={() => addBlockAfter(blocks.length - 1)}>
-              + Add Block
+              {t.addBlock}
             </button>
-            <span className="editor-hint">Ctrl+Enter: new block | Ctrl+S: save | Alt+Arrow: reorder</span>
+            <span className="editor-hint">{t.editorHint}</span>
           </div>
           <div className="editor-bottom-right">
             <button className="btn btn-ghost" onClick={() => { setShowAiPanel(!showAiPanel); if (!showAiPanel) setShowLinkPanel(false); }}>
-              AI
+              {t.ai}
             </button>
             <button className="btn btn-ghost" onClick={() => { setShowLinkPanel(!showLinkPanel); if (!showLinkPanel) setShowAiPanel(false); }}>
-              Links {backlinks.length + forwardLinks.length > 0 ? `(${backlinks.length + forwardLinks.length})` : ""}
+              {t.links} {backlinks.length + forwardLinks.length > 0 ? `(${backlinks.length + forwardLinks.length})` : ""}
             </button>
-            <button className="btn btn-ghost" onClick={() => setShowMoveDialog(true)}>Move</button>
-            <button className="btn btn-ghost" style={{ color: "var(--warn)" }} onClick={handleArchive}>Archive</button>
+            <button className="btn btn-ghost" onClick={() => setShowMoveDialog(true)}>{t.move}</button>
+            <button className="btn btn-ghost" style={{ color: "var(--warn)" }} onClick={handleArchive}>{t.archive}</button>
             <button
               className="btn btn-primary"
               onClick={save}
               disabled={!dirty || saving}
             >
-              {saving ? "Saving..." : dirty ? "Save" : "Saved"}
+              {saving ? t.saving : dirty ? t.save : t.saved}
             </button>
           </div>
         </div>
@@ -413,9 +416,9 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
       {showLinkPanel && (
         <div className="editor-side-panel">
           <div className="side-panel-section">
-            <div className="side-panel-title">Backlinks ({backlinks.length})</div>
+            <div className="side-panel-title">{t.backlinks} ({backlinks.length})</div>
             {backlinks.length === 0 ? (
-              <div className="side-panel-empty">No backlinks yet</div>
+              <div className="side-panel-empty">{t.noLinks}</div>
             ) : (
               backlinks.map((link) => (
                 <div
@@ -429,9 +432,9 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
             )}
           </div>
           <div className="side-panel-section">
-            <div className="side-panel-title">Forward Links ({forwardLinks.length})</div>
+            <div className="side-panel-title">{t.forwardLinks} ({forwardLinks.length})</div>
             {forwardLinks.length === 0 ? (
-              <div className="side-panel-empty">No links yet</div>
+              <div className="side-panel-empty">{t.noLinks}</div>
             ) : (
               forwardLinks.map((link) => (
                 <div
@@ -445,10 +448,10 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
             )}
           </div>
           <div className="side-panel-section">
-            <div className="side-panel-title">Detected Wiki-links ({detectedWikiLinks.length})</div>
+            <div className="side-panel-title">{t.detectedWikiLinks} ({detectedWikiLinks.length})</div>
             {detectedWikiLinks.length === 0 ? (
               <div className="side-panel-empty" style={{ fontSize: 11 }}>
-                Type <code>[[note title]]</code> in any block to create links
+                {t.wikiLinkHint}
               </div>
             ) : (
               detectedWikiLinks.map((text) => {
@@ -468,7 +471,7 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
           </div>
           {relatedNotes.length > 0 && (
             <div className="side-panel-section">
-              <div className="side-panel-title">Related Notes ({relatedNotes.length})</div>
+              <div className="side-panel-title">{t.relatedNotes} ({relatedNotes.length})</div>
               {relatedNotes.map((n) => (
                 <div
                   key={n.id}
@@ -506,7 +509,7 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
       {showMoveDialog && (
         <div className="dialog-overlay" onClick={() => setShowMoveDialog(false)}>
           <div className="dialog-card" onClick={(e) => e.stopPropagation()}>
-            <div className="dialog-title">Move to Notebook</div>
+            <div className="dialog-title">{t.moveToNotebook}</div>
             <div className="dialog-body">
               {notebooks.filter((nb) => !nb.is_inbox).map((nb) => (
                 <button
@@ -514,7 +517,7 @@ function NoteEditorView({ noteId, onBack, onOpenNote }: NoteEditorViewProps) {
                   className={`dialog-option ${nb.id === note.notebook_id ? "active" : ""}`}
                   onClick={() => handleMove(nb.id)}
                 >
-                  {nb.name} {nb.id === note.notebook_id ? "(current)" : ""}
+                  {nb.name} {nb.id === note.notebook_id ? `(${t.current})` : ""}
                 </button>
               ))}
             </div>

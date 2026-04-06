@@ -1274,3 +1274,31 @@ body {
   font-weight: 600;
   flex-shrink: 0;
 }
+
+/* Settings panel (sidebar bottom) */
+.settings-panel {
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-secondary, var(--bg));
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.settings-row select {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font-sans);
+  outline: none;
+  cursor: pointer;
+}

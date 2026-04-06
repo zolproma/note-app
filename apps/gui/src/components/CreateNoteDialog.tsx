@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke, type NotebookItem } from "../tauri";
+import { useI18n } from "../i18n";
 
 interface CreateNoteDialogProps {
   onClose: () => void;
@@ -8,57 +9,58 @@ interface CreateNoteDialogProps {
 
 interface TemplateInfo {
   value: string;
-  label: string;
-  description: string;
+  labelKey: string;
+  descKey: string;
   blocks: string[];
 }
 
-const TEMPLATES: TemplateInfo[] = [
+const TEMPLATE_KEYS: TemplateInfo[] = [
   {
     value: "",
-    label: "Blank",
-    description: "A simple note with a text block.",
-    blocks: ["Text"],
+    labelKey: "templateBlank",
+    descKey: "templateBlankDesc",
+    blocks: ["blockText"],
   },
   {
     value: "cornell",
-    label: "Cornell",
-    description: "Structured for active recall: cue column, notes area, and summary.",
-    blocks: ["Cue", "Text (Notes)", "Summary"],
+    labelKey: "templateCornell",
+    descKey: "templateCornellDesc",
+    blocks: ["blockCue", "blockText", "blockSummary"],
   },
   {
     value: "zettelkasten",
-    label: "Zettelkasten",
-    description: "Atomic idea cards for long-term knowledge building.",
-    blocks: ["Atomic Idea", "Source", "Text (Context)"],
+    labelKey: "templateZettelkasten",
+    descKey: "templateZettelkastenDesc",
+    blocks: ["blockAtomicIdea", "blockSource", "blockText"],
   },
   {
     value: "feedback",
-    label: "Feedback Analysis",
-    description: "Structured comparison of expected vs actual outcomes.",
-    blocks: ["Expected", "Actual", "Deviation", "Cause", "Action"],
+    labelKey: "templateFeedback",
+    descKey: "templateFeedbackDesc",
+    blocks: ["blockExpected", "blockActual", "blockDeviation", "blockCause", "blockAction"],
   },
   {
     value: "daily",
-    label: "Daily Log",
-    description: "Simple daily record with heading and free text.",
-    blocks: ["Heading: Today", "Text"],
+    labelKey: "templateDaily",
+    descKey: "templateDailyDesc",
+    blocks: ["blockHeading", "blockText"],
   },
   {
     value: "retrospective",
-    label: "Retrospective",
-    description: "Project or sprint retrospective template.",
-    blocks: ["What went well", "What could be improved", "Action items"],
+    labelKey: "templateRetrospective",
+    descKey: "templateRetrospectiveDesc",
+    blocks: ["blockText", "blockText", "blockText"],
   },
   {
     value: "meeting",
-    label: "Meeting Minutes",
-    description: "Structured meeting notes with attendees and decisions.",
-    blocks: ["Attendees", "Agenda", "Decisions", "Action Items"],
+    labelKey: "templateMeeting",
+    descKey: "templateMeetingDesc",
+    blocks: ["blockText", "blockText", "blockText", "blockText"],
   },
 ];
 
 function CreateNoteDialog({ onClose, onCreated }: CreateNoteDialogProps) {
+  const t = useI18n();
   const [title, setTitle] = useState("");
   const [template, setTemplate] = useState("");
   const [notebookId, setNotebookId] = useState("");
@@ -73,7 +75,15 @@ function CreateNoteDialog({ onClose, onCreated }: CreateNoteDialogProps) {
     }).catch(console.error);
   }, []);
 
-  const selectedTemplate = TEMPLATES.find((t) => t.value === template) || TEMPLATES[0];
+  const tAny = t as unknown as Record<string, string>;
+  const templates = TEMPLATE_KEYS.map((tmpl) => ({
+    ...tmpl,
+    label: tAny[tmpl.labelKey] || tmpl.labelKey,
+    description: tAny[tmpl.descKey] || tmpl.descKey,
+    blockLabels: tmpl.blocks.map((k) => tAny[k] || k),
+  }));
+
+  const selectedTemplate = templates.find((tmpl) => tmpl.value === template) || templates[0];
 
   async function handleCreate() {
     if (!title.trim()) return;
@@ -94,7 +104,7 @@ function CreateNoteDialog({ onClose, onCreated }: CreateNoteDialogProps) {
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog-card" style={{ width: 540 }} onClick={(e) => e.stopPropagation()}>
-        <div className="dialog-title">Create Note</div>
+        <div className="dialog-title">{t.createNote}</div>
 
         {/* Title input */}
         <input
@@ -102,7 +112,7 @@ function CreateNoteDialog({ onClose, onCreated }: CreateNoteDialogProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
-          placeholder="Note title..."
+          placeholder={t.noteTitle + "..."}
           autoFocus
           style={{
             width: "100%",
@@ -131,7 +141,7 @@ function CreateNoteDialog({ onClose, onCreated }: CreateNoteDialogProps) {
 
         {/* Template selector with preview */}
         <div className="template-grid">
-          {TEMPLATES.map((tmpl) => (
+          {templates.map((tmpl) => (
             <div
               key={tmpl.value}
               className={`template-card ${template === tmpl.value ? "selected" : ""}`}
@@ -145,9 +155,9 @@ function CreateNoteDialog({ onClose, onCreated }: CreateNoteDialogProps) {
 
         {/* Template preview */}
         <div className="template-preview">
-          <div className="template-preview-title">Structure Preview: {selectedTemplate.label}</div>
+          <div className="template-preview-title">{t.preview}: {selectedTemplate.label}</div>
           <div className="template-preview-blocks">
-            {selectedTemplate.blocks.map((block, i) => (
+            {selectedTemplate.blockLabels.map((block, i) => (
               <div key={i} className="template-preview-block">
                 <span className="template-preview-index">{i + 1}</span>
                 {block}
@@ -158,13 +168,13 @@ function CreateNoteDialog({ onClose, onCreated }: CreateNoteDialogProps) {
 
         {/* Actions */}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-ghost" onClick={onClose}>{t.cancel}</button>
           <button
             className="btn btn-primary"
             onClick={handleCreate}
             disabled={!title.trim() || creating}
           >
-            {creating ? "Creating..." : "Create Note"}
+            {creating ? t.saving : t.createNote}
           </button>
         </div>
       </div>

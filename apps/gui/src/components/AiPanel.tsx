@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke, AiSuggestionItem, AiConfig } from "../tauri";
+import { useI18n } from "../i18n";
 
 interface AiPanelProps {
   noteId: string;
@@ -16,6 +17,7 @@ const DEFAULT_CONFIG: AiConfig = {
 type AiJob = "suggest_tags" | "summarize" | "classify" | "suggest_links";
 
 export default function AiPanel({ noteId, onApplyTags, onNavigate }: AiPanelProps) {
+  const t = useI18n();
   const [config, setConfig] = useState<AiConfig>(DEFAULT_CONFIG);
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState<AiJob | null>(null);
@@ -53,11 +55,11 @@ export default function AiPanel({ noteId, onApplyTags, onNavigate }: AiPanelProp
   return (
     <div className="ai-panel">
       <div className="ai-panel-header">
-        <span className="ai-panel-title">AI Assistant</span>
+        <span className="ai-panel-title">{t.aiAssistant}</span>
         <button
           className="btn-icon"
           onClick={() => setShowSettings(!showSettings)}
-          title="Settings"
+          title={t.settings}
         >
           {showSettings ? "\u2715" : "\u2699"}
         </button>
@@ -66,7 +68,7 @@ export default function AiPanel({ noteId, onApplyTags, onNavigate }: AiPanelProp
       {showSettings && (
         <div className="ai-settings">
           <label className="ai-setting-row">
-            <span>Provider</span>
+            <span>{t.provider}</span>
             <select
               value={config.provider}
               onChange={(e) => setConfig({ ...config, provider: e.target.value })}
@@ -76,7 +78,7 @@ export default function AiPanel({ noteId, onApplyTags, onNavigate }: AiPanelProp
             </select>
           </label>
           <label className="ai-setting-row">
-            <span>Model</span>
+            <span>{t.model}</span>
             <input
               type="text"
               value={config.model}
@@ -85,13 +87,13 @@ export default function AiPanel({ noteId, onApplyTags, onNavigate }: AiPanelProp
             />
           </label>
           <label className="ai-setting-row">
-            <span>Mode</span>
+            <span>{t.mode}</span>
             <select
               value={config.mode}
               onChange={(e) => setConfig({ ...config, mode: e.target.value })}
             >
-              <option value="local_only">Local Only</option>
-              <option value="private_api">Private API</option>
+              <option value="local_only">{t.localOnly}</option>
+              <option value="private_api">{t.privateApi}</option>
             </select>
           </label>
           {config.provider === "openai" && (
@@ -116,28 +118,28 @@ export default function AiPanel({ noteId, onApplyTags, onNavigate }: AiPanelProp
           onClick={() => runAi("suggest_tags")}
           disabled={loading !== null}
         >
-          {loading === "suggest_tags" ? "Thinking..." : "Suggest Tags"}
+          {loading === "suggest_tags" ? t.thinking : t.suggestTags}
         </button>
         <button
           className="ai-action-btn"
           onClick={() => runAi("summarize")}
           disabled={loading !== null}
         >
-          {loading === "summarize" ? "Thinking..." : "Summarize"}
+          {loading === "summarize" ? t.thinking : t.summarize}
         </button>
         <button
           className="ai-action-btn"
           onClick={() => runAi("classify")}
           disabled={loading !== null}
         >
-          {loading === "classify" ? "Thinking..." : "Classify"}
+          {loading === "classify" ? t.thinking : t.classify}
         </button>
         <button
           className="ai-action-btn"
           onClick={() => runAi("suggest_links")}
           disabled={loading !== null}
         >
-          {loading === "suggest_links" ? "Thinking..." : "Suggest Links"}
+          {loading === "suggest_links" ? t.thinking : t.suggestLinks}
         </button>
       </div>
 
@@ -164,7 +166,7 @@ export default function AiPanel({ noteId, onApplyTags, onNavigate }: AiPanelProp
                         </div>
                         {onApplyTags && (
                           <button className="btn-sm ai-apply-btn" onClick={handleApplyTags}>
-                            Apply Tags
+                            {t.applyTags}
                           </button>
                         )}
                       </>
@@ -179,7 +181,7 @@ export default function AiPanel({ noteId, onApplyTags, onNavigate }: AiPanelProp
                 {(() => {
                   try {
                     const links = JSON.parse(suggestion.content) as { note_id: string; reason: string }[];
-                    if (links.length === 0) return <p>No links suggested.</p>;
+                    if (links.length === 0) return <p>{t.noLinks}</p>;
                     return links.map((link) => (
                       <div key={link.note_id} className="ai-link-item">
                         <button

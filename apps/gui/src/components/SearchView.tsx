@@ -7,6 +7,7 @@ import {
   type NotebookItem,
   type TagItem,
 } from "../tauri";
+import { useI18n } from "../i18n";
 
 interface SearchViewProps {
   query: string;
@@ -14,6 +15,7 @@ interface SearchViewProps {
 }
 
 function SearchView({ query, onOpenNote }: SearchViewProps) {
+  const t = useI18n();
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -91,14 +93,14 @@ function SearchView({ query, onOpenNote }: SearchViewProps) {
     setSavedSearches((prev) => prev.filter((s) => s.id !== id));
   }
 
-  if (loading) return <div className="empty-state"><div className="empty-state-desc">Searching...</div></div>;
+  if (loading) return <div className="empty-state"><div className="empty-state-desc">Loading...</div></div>;
 
   return (
     <div>
       {/* Saved searches */}
       {savedSearches.length > 0 && (
         <div className="saved-searches">
-          <div className="saved-searches-label">Saved Searches</div>
+          <div className="saved-searches-label">{t.savedSearches}</div>
           <div className="saved-searches-list">
             {savedSearches.map((ss) => (
               <div key={ss.id} className="saved-search-chip">
@@ -113,12 +115,12 @@ function SearchView({ query, onOpenNote }: SearchViewProps) {
       {/* Filters */}
       <div className="search-toolbar">
         <button className="btn btn-ghost" onClick={() => setShowFilters(!showFilters)}>
-          Filters {showFilters ? "^" : "v"}
+          {t.filters} {showFilters ? "^" : "v"}
         </button>
-        <button className="btn btn-ghost" onClick={() => doSearch()}>Search</button>
+        <button className="btn btn-ghost" onClick={() => doSearch()}>{t.search}</button>
         {searched && (
           <>
-            <span style={{ fontSize: 12, color: "var(--muted)" }}>{results.length} result(s)</span>
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>{results.length} {t.resultCount}</span>
             {showSaveInput ? (
               <span className="save-search-inline">
                 <input
@@ -126,13 +128,13 @@ function SearchView({ query, onOpenNote }: SearchViewProps) {
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSaveSearch(); if (e.key === "Escape") setShowSaveInput(false); }}
-                  placeholder="Search name"
+                  placeholder={t.searchName}
                   autoFocus
                 />
-                <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={handleSaveSearch}>Save</button>
+                <button className="btn btn-primary" style={{ padding: "4px 10px", fontSize: 11 }} onClick={handleSaveSearch}>{t.save}</button>
               </span>
             ) : (
-              <button className="btn btn-ghost" style={{ fontSize: 11 }} onClick={() => setShowSaveInput(true)}>Save Search</button>
+              <button className="btn btn-ghost" style={{ fontSize: 11 }} onClick={() => setShowSaveInput(true)}>{t.saveSearch}</button>
             )}
           </>
         )}
@@ -141,37 +143,37 @@ function SearchView({ query, onOpenNote }: SearchViewProps) {
       {showFilters && (
         <div className="search-filters">
           <select value={filterLifecycle} onChange={(e) => setFilterLifecycle(e.target.value)} className="search-filter-select">
-            <option value="">Any status</option>
-            <option value="inbox">Inbox</option>
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
+            <option value="">{t.anyStatus}</option>
+            <option value="inbox">{t.inbox}</option>
+            <option value="active">{t.active}</option>
+            <option value="archived">{t.archived}</option>
           </select>
           <select value={filterNotebook} onChange={(e) => setFilterNotebook(e.target.value)} className="search-filter-select">
-            <option value="">Any notebook</option>
+            <option value="">{t.anyNotebook}</option>
             {notebooks.filter((nb) => !nb.is_inbox).map((nb) => (
               <option key={nb.id} value={nb.id}>{nb.name}</option>
             ))}
           </select>
           <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="search-filter-select">
-            <option value="">Any tag</option>
-            {allTags.map((t) => (
-              <option key={t.id} value={t.name}>{t.name}</option>
+            <option value="">{t.anyTag}</option>
+            {allTags.map((tag) => (
+              <option key={tag.id} value={tag.name}>{tag.name}</option>
             ))}
           </select>
-          <button className="btn btn-ghost" style={{ fontSize: 11 }} onClick={() => { setFilterLifecycle(""); setFilterNotebook(""); setFilterTag(""); }}>Clear</button>
+          <button className="btn btn-ghost" style={{ fontSize: 11 }} onClick={() => { setFilterLifecycle(""); setFilterNotebook(""); setFilterTag(""); }}>{t.clear}</button>
         </div>
       )}
 
       {/* Results */}
       {!searched || !query.trim() ? (
         <div className="empty-state">
-          <div className="empty-state-title">Search your notes</div>
-          <div className="empty-state-desc">Full-text search with filters. Use the toolbar to refine results.</div>
+          <div className="empty-state-title">{t.searchEmpty}</div>
+          <div className="empty-state-desc">{t.searchEmptyDesc}</div>
         </div>
       ) : results.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-title">No results</div>
-          <div className="empty-state-desc">No notes matched your search.</div>
+          <div className="empty-state-title">{t.noResults}</div>
+          <div className="empty-state-desc">{t.searchEmptyDesc}</div>
         </div>
       ) : (
         <div className="note-list">

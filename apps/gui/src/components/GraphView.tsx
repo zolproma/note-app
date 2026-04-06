@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { invoke, type GraphData, type GraphNode, type GraphEdge } from "../tauri";
+import { useI18n } from "../i18n";
 
 interface GraphViewProps {
   onOpenNote: (id: string) => void;
@@ -13,6 +14,7 @@ interface SimNode extends GraphNode {
 }
 
 function GraphView({ onOpenNote }: GraphViewProps) {
+  const t = useI18n();
   const [data, setData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -232,13 +234,13 @@ function GraphView({ onOpenNote }: GraphViewProps) {
     }
   }, [onOpenNote]);
 
-  if (loading) return <div className="empty-state"><div className="empty-state-desc">Loading graph...</div></div>;
+  if (loading) return <div className="empty-state"><div className="empty-state-desc">Loading...</div></div>;
 
   if (!data || data.nodes.length === 0) {
     return (
       <div className="empty-state">
-        <div className="empty-state-title">No notes to graph</div>
-        <div className="empty-state-desc">Create notes and links to see the relationship graph.</div>
+        <div className="empty-state-title">{t.noNotesToGraph}</div>
+        <div className="empty-state-desc">{t.noNotesToGraphDesc}</div>
       </div>
     );
   }
@@ -246,7 +248,7 @@ function GraphView({ onOpenNote }: GraphViewProps) {
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <div className="graph-info">
-        {data.nodes.length} notes, {data.edges.length} links. Click to open. Drag to move.
+        {data.nodes.length} {t.graphNodes}, {data.edges.length} {t.graphEdges}. {t.graphClickOpen}
       </div>
       <canvas
         ref={canvasRef}

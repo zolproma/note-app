@@ -7,6 +7,7 @@ import SearchView from "./components/SearchView";
 import NoteEditorView from "./components/NoteEditorView";
 import GraphView from "./components/GraphView";
 import CaptureDialog from "./components/CaptureDialog";
+import { type Locale, messages, getStoredLocale, setStoredLocale, I18nContext } from "./i18n";
 
 export type View = "inbox" | "notes" | "search" | "graph" | "editor";
 
@@ -16,9 +17,15 @@ function App() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [showCapture, setShowCapture] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [locale, setLocale] = useState<Locale>(getStoredLocale);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  const changeLocale = useCallback((l: Locale) => {
+    setLocale(l);
+    setStoredLocale(l);
+  }, []);
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -53,47 +60,51 @@ function App() {
   }, [refresh]);
 
   return (
-    <div className="app-layout">
-      <Sidebar
-        currentView={view}
-        onNavigate={(v) => {
-          setView(v);
-          setSelectedNoteId(null);
-        }}
-        onCapture={() => setShowCapture(true)}
-      />
-      <div className="main-content">
-        <Topbar
-          view={view}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSearch={() => {
-            if (searchQuery.trim()) setView("search");
+    <I18nContext.Provider value={messages[locale]}>
+      <div className="app-layout">
+        <Sidebar
+          currentView={view}
+          onNavigate={(v) => {
+            setView(v);
+            setSelectedNoteId(null);
           }}
-          onBack={view === "editor" ? goBack : undefined}
-          searchInputRef={searchInputRef}
+          onCapture={() => setShowCapture(true)}
+          locale={locale}
+          onLocaleChange={changeLocale}
         />
-        <div className="content-area">
-          {view === "inbox" && <InboxView key={refreshKey} onOpenNote={openNote} onRefresh={refresh} />}
-          {view === "notes" && <NotesView key={refreshKey} onOpenNote={openNote} onRefresh={refresh} />}
-          {view === "search" && <SearchView query={searchQuery} onOpenNote={openNote} />}
-          {view === "graph" && <GraphView onOpenNote={openNote} />}
-          {view === "editor" && selectedNoteId && (
-            <NoteEditorView noteId={selectedNoteId} onBack={goBack} onOpenNote={openNote} />
-          )}
+        <div className="main-content">
+          <Topbar
+            view={view}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onSearch={() => {
+              if (searchQuery.trim()) setView("search");
+            }}
+            onBack={view === "editor" ? goBack : undefined}
+            searchInputRef={searchInputRef}
+          />
+          <div className="content-area">
+            {view === "inbox" && <InboxView key={refreshKey} onOpenNote={openNote} onRefresh={refresh} />}
+            {view === "notes" && <NotesView key={refreshKey} onOpenNote={openNote} onRefresh={refresh} />}
+            {view === "search" && <SearchView query={searchQuery} onOpenNote={openNote} />}
+            {view === "graph" && <GraphView onOpenNote={openNote} />}
+            {view === "editor" && selectedNoteId && (
+              <NoteEditorView noteId={selectedNoteId} onBack={goBack} onOpenNote={openNote} />
+            )}
+          </div>
         </div>
+        {showCapture && (
+          <CaptureDialog
+            onClose={() => setShowCapture(false)}
+            onCaptured={() => {
+              setShowCapture(false);
+              setView("inbox");
+              refresh();
+            }}
+          />
+        )}
       </div>
-      {showCapture && (
-        <CaptureDialog
-          onClose={() => setShowCapture(false)}
-          onCaptured={() => {
-            setShowCapture(false);
-            setView("inbox");
-            refresh();
-          }}
-        />
-      )}
-    </div>
+    </I18nContext.Provider>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke, type NoteItem } from "../tauri";
 import CreateNoteDialog from "./CreateNoteDialog";
+import { useI18n } from "../i18n";
 
 interface NotesViewProps {
   onOpenNote: (id: string) => void;
@@ -8,6 +9,7 @@ interface NotesViewProps {
 }
 
 function NotesView({ onOpenNote, onRefresh }: NotesViewProps) {
+  const t = useI18n();
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -37,14 +39,14 @@ function NotesView({ onOpenNote, onRefresh }: NotesViewProps) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <span style={{ fontSize: 13, color: "var(--muted)" }}>{notes.length} note(s)</span>
-        <button className="btn btn-primary" onClick={() => setShowCreate(true)}>+ New Note</button>
+        <span style={{ fontSize: 13, color: "var(--muted)" }}>{notes.length} {t.noteCount}</span>
+        <button className="btn btn-primary" onClick={() => setShowCreate(true)}>+ {t.newNote}</button>
       </div>
 
       {notes.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-title">No notes yet</div>
-          <div className="empty-state-desc">Click "+ New Note" to get started.</div>
+          <div className="empty-state-title">{t.notesEmpty}</div>
+          <div className="empty-state-desc">{t.notesEmptyDesc}</div>
         </div>
       ) : (
         <div className="note-list">
@@ -59,7 +61,7 @@ function NotesView({ onOpenNote, onRefresh }: NotesViewProps) {
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <span className={`note-lifecycle ${note.lifecycle}`}>{note.lifecycle}</span>
                 <button className="btn btn-ghost" style={{ fontSize: 11, padding: "4px 8px", color: "var(--danger)" }} onClick={() => handleDelete(note.id)}>
-                  Delete
+                  {t.delete}
                 </button>
               </div>
             </div>

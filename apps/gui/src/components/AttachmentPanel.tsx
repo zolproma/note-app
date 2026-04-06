@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { invoke, type AttachmentItem } from "../tauri";
+import { useI18n } from "../i18n";
 
 interface AttachmentPanelProps {
   noteId: string;
@@ -21,6 +22,7 @@ function formatSize(bytes: number): string {
 }
 
 function AttachmentPanel({ noteId }: AttachmentPanelProps) {
+  const t = useI18n();
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -37,7 +39,7 @@ function AttachmentPanel({ noteId }: AttachmentPanelProps) {
       const { open } = await import("@tauri-apps/plugin-dialog");
       const selected = await open({
         multiple: true,
-        title: "Attach Files",
+        title: t.attachFiles,
       });
       if (!selected) return;
 
@@ -61,7 +63,7 @@ function AttachmentPanel({ noteId }: AttachmentPanelProps) {
       console.error("Dialog failed:", e);
       setUploading(false);
     }
-  }, [noteId]);
+  }, [noteId, t]);
 
   async function handleDelete(id: string) {
     try {
@@ -133,7 +135,7 @@ function AttachmentPanel({ noteId }: AttachmentPanelProps) {
     >
       <div className="attachment-panel-header">
         <span className="attachment-panel-title">
-          Attachments ({attachments.length})
+          {t.attachFiles} ({attachments.length})
         </span>
         <button
           className="btn btn-ghost"
@@ -141,13 +143,13 @@ function AttachmentPanel({ noteId }: AttachmentPanelProps) {
           onClick={handleUpload}
           disabled={uploading}
         >
-          {uploading ? "Uploading..." : "+ Attach"}
+          {uploading ? t.uploading : t.attach}
         </button>
       </div>
 
       {attachments.length === 0 ? (
         <div className="attachment-empty">
-          Drop files here or click Attach
+          {t.dropFiles}
         </div>
       ) : (
         <div className="attachment-list">
@@ -167,7 +169,7 @@ function AttachmentPanel({ noteId }: AttachmentPanelProps) {
               <button
                 className="block-action-btn block-action-delete"
                 onClick={() => handleDelete(att.id)}
-                title="Delete attachment"
+                title={t.deleteAttachment}
               >
                 &#x2715;
               </button>

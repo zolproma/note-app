@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke, type NoteItem } from "../tauri";
+import { useI18n } from "../i18n";
 
 interface InboxViewProps {
   onOpenNote: (id: string) => void;
@@ -7,6 +8,7 @@ interface InboxViewProps {
 }
 
 function InboxView({ onOpenNote, onRefresh }: InboxViewProps) {
+  const t = useI18n();
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,10 +28,8 @@ function InboxView({ onOpenNote, onRefresh }: InboxViewProps) {
   if (notes.length === 0) {
     return (
       <div className="empty-state">
-        <div className="empty-state-title">Inbox is empty</div>
-        <div className="empty-state-desc">
-          Use Quick Capture or <code>notes capture "idea"</code> from CLI.
-        </div>
+        <div className="empty-state-title">{t.inboxEmpty}</div>
+        <div className="empty-state-desc">{t.inboxEmptyDesc}</div>
       </div>
     );
   }
@@ -46,9 +46,9 @@ function InboxView({ onOpenNote, onRefresh }: InboxViewProps) {
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => handlePromote(note.id)}>
-              Promote
+              {t.promote}
             </button>
-            <span className="note-lifecycle inbox">inbox</span>
+            <span className="note-lifecycle inbox">{t.inbox.toLowerCase()}</span>
           </div>
         </div>
       ))}

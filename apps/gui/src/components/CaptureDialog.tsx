@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke } from "../tauri";
+import { useI18n } from "../i18n";
 
 interface CaptureDialogProps {
   onClose: () => void;
@@ -7,6 +8,7 @@ interface CaptureDialogProps {
 }
 
 function CaptureDialog({ onClose, onCaptured }: CaptureDialogProps) {
+  const t = useI18n();
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,11 +37,11 @@ function CaptureDialog({ onClose, onCaptured }: CaptureDialogProps) {
         style={{ width: 480, padding: 24, boxShadow: "var(--shadow-lg)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Quick Capture</div>
+        <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>{t.captureTitle}</div>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Capture your thought..."
+          placeholder={t.capturePlaceholder}
           autoFocus
           rows={4}
           style={{
@@ -52,13 +54,13 @@ function CaptureDialog({ onClose, onCaptured }: CaptureDialogProps) {
           }}
         />
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-ghost" onClick={onClose}>{t.cancel}</button>
           <button className="btn btn-primary" onClick={handleSubmit} disabled={!content.trim() || submitting}>
-            {submitting ? "Saving..." : "Capture"}
+            {submitting ? t.saving : t.capture}
           </button>
         </div>
         <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 8, textAlign: "right" }}>
-          Ctrl+Enter to save
+          {t.ctrlEnterSave}
         </div>
       </div>
     </div>

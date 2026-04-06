@@ -1,5 +1,6 @@
 import type { RefObject } from "react";
 import type { View } from "../App";
+import { useI18n } from "../i18n";
 
 interface TopbarProps {
   view: View;
@@ -10,15 +11,17 @@ interface TopbarProps {
   searchInputRef?: RefObject<HTMLInputElement | null>;
 }
 
-const viewTitles: Record<View, string> = {
-  inbox: "Inbox",
-  notes: "All Notes",
-  search: "Search",
-  graph: "Graph",
-  editor: "Note",
-};
-
 function Topbar({ view, searchQuery, onSearchChange, onSearch, onBack, searchInputRef }: TopbarProps) {
+  const t = useI18n();
+
+  const viewTitles: Record<View, string> = {
+    inbox: t.inbox,
+    notes: t.allNotes,
+    search: t.search,
+    graph: t.graph,
+    editor: t.note,
+  };
+
   return (
     <div className="topbar">
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -39,7 +42,7 @@ function Topbar({ view, searchQuery, onSearchChange, onSearch, onBack, searchInp
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Search notes... (Ctrl+/)"
+            placeholder={t.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") onSearch(); }}
